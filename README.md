@@ -1,8 +1,8 @@
 # Obsidian Book Search Plugin
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/anpigon/obsidian-book-search-plugin/release.yml?logo=github)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/anpigon/obsidian-book-search-plugin?sort=semver)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/anpigon/obsidian-book-search-plugin/total)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/fmartingr/obsidian-book-search-plugin/release.yml?logo=github)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/fmartingr/obsidian-book-search-plugin?sort=semver)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/fmartingr/obsidian-book-search-plugin/total)
 [![Korean](https://img.shields.io/badge/Language-한국어-blueviolet)](README.ko.md)
 
 Easily create book notes.
@@ -11,7 +11,7 @@ Easily create book notes.
 
 ## Changelog
 
-To view the changelog for the latest and previous versions, please click [here](https://github.com/anpigon/obsidian-book-search-plugin/releases) to visit the GitHub releases page for the Obsidian Book Search Plugin.
+To view the changelog for the latest and previous versions, please click [here](https://github.com/fmartingr/obsidian-book-search-plugin/releases) to visit the GitHub releases page for the Obsidian Book Search Plugin.
 
 <br>
 
@@ -305,7 +305,7 @@ Here's how to create and use one:
 
 ## License
 
-[Obsidian Book Search Plugin](https://github.com/anpigon/obsidian-book-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
+[Obsidian Book Search Plugin](https://github.com/fmartingr/obsidian-book-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
 
 <br>
 
@@ -313,9 +313,32 @@ Here's how to create and use one:
 
 Feel free to contribute.
 
-You can create an [issue](https://github.com/anpigon/obsidian-book-search-plugin/issues) to report a bug, suggest an improvement for this plugin, ask a question, etc.
+You can create an [issue](https://github.com/fmartingr/obsidian-book-search-plugin/issues) to report a bug, suggest an improvement for this plugin, ask a question, etc.
 
-You can make a [pull request](https://github.com/anpigon/obsidian-book-search-plugin/pulls) to contribute to this plugin development.
+You can make a [pull request](https://github.com/fmartingr/obsidian-book-search-plugin/pulls) to contribute to this plugin development.
+
+### Development
+
+This project uses [bun](https://bun.sh/) as its package manager and build tool.
+
+```bash
+# Install dependencies
+bun install
+
+# Start development build (watch mode)
+bun run dev
+
+# Run linting (format check + eslint + tsc)
+bun run lint
+
+# Run tests
+bun run test
+
+# Production build (outputs to dist/)
+bun run build
+```
+
+The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-book-search-plugin/` for local testing.
 
 <br>
 
@@ -323,7 +346,7 @@ You can make a [pull request](https://github.com/anpigon/obsidian-book-search-pl
 
 If this plugin helped you and you wish to contribute :)
 
-Buy me coffee on [buymeacoffee.com/anpigon](https://www.buymeacoffee.com/anpigon)
+Buy me coffee on [buymeacoffee.com/fmartingr](https://www.buymeacoffee.com/fmartingr)
 
-<a href="https://www.buymeacoffee.com/anpigon" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>&nbsp;
-<a href="https://anpigon.github.io/buymeacoffee/"><img src="https://user-images.githubusercontent.com/3969643/184924261-f0224843-08fa-4bce-af70-dc5db589979f.png" height="60"></a>
+<a href="https://www.buymeacoffee.com/fmartingr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>&nbsp;
+<a href="https://fmartingr.github.io/buymeacoffee/"><img src="https://user-images.githubusercontent.com/3969643/184924261-f0224843-08fa-4bce-af70-dc5db589979f.png" height="60"></a>

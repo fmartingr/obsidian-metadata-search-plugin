@@ -9,7 +9,7 @@ import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
 import { FileSuggest } from './suggesters/FileSuggester';
 import { FolderSuggest } from './suggesters/FolderSuggester';
 
-const docUrl = 'https://github.com/anpigon/obsidian-book-search-plugin';
+const docUrl = 'https://github.com/fmartingr/obsidian-book-search-plugin';
 
 export enum DefaultFrontmatterKeyType {
   snakeCase = 'Snake Case',
