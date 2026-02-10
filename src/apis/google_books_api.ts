@@ -56,6 +56,8 @@ export class GoogleBooksApi implements BaseBooksApiImpl {
   }
 
   private extractBasicBookInfo(item: VolumeInfo): Partial<Book> {
+    const images = item.imageLinks;
+    const baseUrl = images?.thumbnail ?? '';
     return {
       title: item.title,
       subtitle: item.subtitle,
@@ -65,8 +67,16 @@ export class GoogleBooksApi implements BaseBooksApiImpl {
       categories: item.categories,
       publisher: item.publisher,
       totalPage: item.pageCount,
-      coverUrl: this.setCoverImageEdgeCurl(item.imageLinks?.thumbnail ?? '', this.enableCoverImageEdgeCurl),
-      coverSmallUrl: this.setCoverImageEdgeCurl(item.imageLinks?.smallThumbnail ?? '', this.enableCoverImageEdgeCurl),
+      coverUrl: this.setCoverImageEdgeCurl(
+        images?.extraLarge ?? (baseUrl ? GoogleBooksApi.convertGoogleBookImageURLSize(baseUrl, 6) : ''),
+        this.enableCoverImageEdgeCurl,
+      ),
+      coverSmallUrl: this.setCoverImageEdgeCurl(images?.smallThumbnail ?? '', this.enableCoverImageEdgeCurl),
+      coverMediumUrl: this.setCoverImageEdgeCurl(images?.thumbnail ?? '', this.enableCoverImageEdgeCurl),
+      coverLargeUrl: this.setCoverImageEdgeCurl(
+        images?.extraLarge ?? images?.large ?? '',
+        this.enableCoverImageEdgeCurl,
+      ),
       publishDate: item.publishedDate || '',
       description: item.description,
       link: item.canonicalVolumeLink || item.infoLink,
@@ -87,6 +97,8 @@ export class GoogleBooksApi implements BaseBooksApiImpl {
       totalPage: '',
       coverUrl: '',
       coverSmallUrl: '',
+      coverMediumUrl: '',
+      coverLargeUrl: '',
       description: '',
       link: '',
       previewLink: '',
@@ -101,12 +113,30 @@ export class GoogleBooksApi implements BaseBooksApiImpl {
   }
 
   private setCoverImageEdgeCurl(url: string, enabled: boolean): string {
-    // Edge curl is included in the cover image URL parameters by default,
-    // so we need to remove it if it's disabled
-    return enabled ? url : url.replace('&edge=curl', '');
+    if (!url) return url;
+    try {
+      const urlObj = new URL(url);
+      // Google Books API returns HTTP URLs, but HTTPS is required for
+      // Obsidian's requestUrl to download images reliably.
+      urlObj.protocol = 'https:';
+      if (!enabled) {
+        // Edge curl is included in the cover image URL parameters by default,
+        // so we need to remove it if it's disabled.
+        urlObj.searchParams.delete('edge');
+      }
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
   }
 
   static convertGoogleBookImageURLSize(url: string, zoom: number) {
-    return url.replace(/(&zoom)=\d/, `$1=${zoom}`);
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('zoom', String(zoom));
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
   }
 }

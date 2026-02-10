@@ -71,7 +71,7 @@ export default class BookSearchPlugin extends Plugin {
     let contentBody = '';
 
     if (enableCoverImageSave) {
-      const coverImageUrl = book.coverLargeUrl || book.coverMediumUrl || book.coverSmallUrl || book.coverUrl;
+      const coverImageUrl = book.coverUrl;
       if (coverImageUrl) {
         const imageName = makeFileName(book, this.settings.fileNameFormat, 'jpg');
         book.localCoverImage = await this.downloadAndSaveImage(imageName, coverImagePath, coverImageUrl);
