@@ -9,28 +9,14 @@ export interface BaseBooksApiImpl {
   getByQuery(query: string, options?: Record<string, string>): Promise<Book[]>;
 }
 
-class ConfigurationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ConfigurationError';
-  }
-}
-
 export function factoryServiceProvider(settings: BookSearchPluginSettings): BaseBooksApiImpl {
   switch (settings.serviceProvider) {
     case ServiceProvider.google:
       return new GoogleBooksApi(settings.localePreference, settings.enableCoverImageEdgeCurl, settings.apiKey);
     case ServiceProvider.naver:
-      validateNaverSettings(settings);
       return new NaverBooksApi(settings.naverClientId, settings.naverClientSecret);
     default:
       throw new Error('Unsupported service provider.');
-  }
-}
-
-function validateNaverSettings(settings: BookSearchPluginSettings): void {
-  if (!settings.naverClientId || !settings.naverClientSecret) {
-    throw new ConfigurationError('네이버 개발자센터에서 "Client ID"와 "Client Secret"를 발급받아 설정해주세요.');
   }
 }
 

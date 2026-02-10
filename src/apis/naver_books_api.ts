@@ -2,11 +2,28 @@ import { Book } from '@models/book.model';
 import { apiGet, BaseBooksApiImpl } from './base_api';
 import { NaverBookItem, NaverBooksResponse } from './models/naver_books_response';
 
+class ConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConfigurationError';
+  }
+}
+
+function validateSettings(clientId: string, clientSecret: string): void {
+  if (!clientId || !clientSecret) {
+    throw new ConfigurationError(
+      'Please obtain a "Client ID" and "Client Secret" from the Naver Developer Center and configure them in settings.',
+    );
+  }
+}
+
 export class NaverBooksApi implements BaseBooksApiImpl {
   constructor(
-    private readonly clientId,
+    private readonly clientId: string,
     private readonly clientSecret: string,
-  ) {}
+  ) {
+    validateSettings(clientId, clientSecret);
+  }
 
   async getByQuery(query: string) {
     try {
