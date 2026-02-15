@@ -1,4 +1,4 @@
-import { Book } from '@models/book.model';
+import { SearchResult } from '@providers/types';
 import { App, normalizePath, Notice, TFile } from 'obsidian';
 
 export async function getTemplateContents(app: App, templatePath: string | undefined): Promise<string> {
@@ -12,8 +12,8 @@ export async function getTemplateContents(app: App, templatePath: string | undef
     const templateFile = metadataCache.getFirstLinkpathDest(normalizedTemplatePath, '');
     return templateFile ? vault.cachedRead(templateFile) : '';
   } catch (err) {
-    console.error(`Failed to read the daily note template '${normalizedTemplatePath}'`, err);
-    new Notice('Failed to read the daily note template');
+    console.error(`Failed to read the template '${normalizedTemplatePath}'`, err);
+    new Notice('Failed to read the template');
     return '';
   }
 }
@@ -43,7 +43,7 @@ export function applyTemplateTransformations(rawTemplateContents: string): strin
   );
 }
 
-export function executeInlineScriptsTemplates(book: Book, text: string) {
+export function executeInlineScriptsTemplates(item: SearchResult, text: string) {
   const commandRegex = /<%(?:=)(.+)%>/g;
   const ctor = getFunctionConstructor();
   const matchedList = [...text.matchAll(commandRegex)];
@@ -51,12 +51,12 @@ export function executeInlineScriptsTemplates(book: Book, text: string) {
     try {
       const outputs = new ctor(
         [
-          'const [book] = arguments',
+          'const [item] = arguments',
           `const output = ${script}`,
           'if(typeof output === "string") return output',
           'return JSON.stringify(output)',
         ].join(';'),
-      )(book);
+      )(item);
       return result.replace(matched, outputs);
     } catch (err) {
       console.warn(err);

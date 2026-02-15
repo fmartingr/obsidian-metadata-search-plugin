@@ -1,27 +1,4 @@
-import { Book } from '@models/book.model';
-import { BookSearchPluginSettings } from '@settings/settings';
-import { ServiceProvider } from '@src/constants';
 import { requestUrl } from 'obsidian';
-import { GoogleBooksApi } from './google_books_api';
-import { HardcoverBooksApi } from './hardcover_books_api';
-import { NaverBooksApi } from './naver_books_api';
-
-export interface BaseBooksApiImpl {
-  getByQuery(query: string, options?: Record<string, string>): Promise<Book[]>;
-}
-
-export function factoryServiceProvider(settings: BookSearchPluginSettings): BaseBooksApiImpl {
-  switch (settings.serviceProvider) {
-    case ServiceProvider.google:
-      return new GoogleBooksApi(settings.localePreference, settings.enableCoverImageEdgeCurl, settings.apiKey);
-    case ServiceProvider.naver:
-      return new NaverBooksApi(settings.naverClientId, settings.naverClientSecret);
-    case ServiceProvider.hardcover:
-      return new HardcoverBooksApi(settings.hardcoverApiToken);
-    default:
-      throw new Error('Unsupported service provider.');
-  }
-}
 
 export async function apiGet<T>(
   url: string,

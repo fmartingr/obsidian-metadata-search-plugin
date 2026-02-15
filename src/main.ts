@@ -1,44 +1,74 @@
 import { MarkdownView, Notice, Plugin, TFile, requestUrl } from 'obsidian';
 
-import { BookSearchModal } from '@views/book_search_modal';
-import { BookSuggestModal } from '@views/book_suggest_modal';
+import { registry } from '@providers/registry';
+import { MetadataKind, MetadataProvider, SearchResult } from '@providers/types';
+import { booksKind } from '@providers/books/kind';
+import { googleBooksRegistration } from '@providers/books/google';
+import { naverBooksRegistration } from '@providers/books/naver';
+import { hardcoverBooksRegistration } from '@providers/books/hardcover';
+
+import { SearchModal } from '@views/search_modal';
+import { MetadataSuggestModal } from '@views/suggest_modal';
 import { CursorJumper } from '@utils/cursor_jumper';
-import { Book } from '@models/book.model';
-import { BookSearchSettingTab, BookSearchPluginSettings, DEFAULT_SETTINGS } from '@settings/settings';
+import {
+  MetadataSearchSettingTab,
+  PluginSettings,
+  MetadataKindSettings,
+  DEFAULT_SETTINGS,
+  DEFAULT_KIND_SETTINGS,
+} from '@settings/settings';
 import {
   getTemplateContents,
   applyTemplateTransformations,
   useTemplaterPluginInFile,
   executeInlineScriptsTemplates,
 } from '@utils/template';
-import { replaceVariableSyntax, makeFileName, applyDefaultFrontMatter, toStringFrontMatter } from '@utils/utils';
+import { replaceVariableSyntax, makeFileName, toStringFrontMatter } from '@utils/utils';
 
-export default class BookSearchPlugin extends Plugin {
-  settings: BookSearchPluginSettings;
+function registerAllProviders() {
+  // Register metadata kinds
+  registry.registerKind(booksKind);
+
+  // Register providers
+  registry.registerProvider(googleBooksRegistration);
+  registry.registerProvider(naverBooksRegistration);
+  registry.registerProvider(hardcoverBooksRegistration);
+}
+
+export default class MetadataSearchPlugin extends Plugin {
+  settings: PluginSettings;
 
   async onload() {
     await this.loadSettings();
 
-    // This creates an icon in the left ribbon.
-    const ribbonIconEl = this.addRibbonIcon('book', 'Create new book note', () => this.createNewBookNote());
-    // Perform additional things with the ribbon
-    ribbonIconEl.addClass('obsidian-metadata-search-plugin-ribbon-class');
+    // Register all kinds and providers
+    registerAllProviders();
 
-    // This adds a simple command that can be triggered anywhere
-    this.addCommand({
-      id: 'open-book-search-modal',
-      name: 'Create new book note',
-      callback: () => this.createNewBookNote(),
-    });
+    // Ensure default kind settings exist for all registered kinds
+    this.ensureKindDefaults();
 
-    this.addCommand({
-      id: 'open-book-search-modal-to-insert',
-      name: 'Insert the metadata',
-      callback: () => this.insertMetadata(),
-    });
+    // For each registered kind, set up commands and ribbon icons
+    for (const kind of registry.getKinds()) {
+      const kindSettings = this.getKindSettings(kind.id);
+      if (!kindSettings.enabled) continue;
 
-    // This adds a settings tab so the user can configure various aspects of the plugin
-    this.addSettingTab(new BookSearchSettingTab(this.app, this));
+      this.addRibbonIcon(kind.icon, `Create new ${kind.name.toLowerCase()} note`, () => this.createNewNote(kind.id));
+
+      this.addCommand({
+        id: `create-${kind.id}-note`,
+        name: `Create new ${kind.name.toLowerCase()} note`,
+        callback: () => this.createNewNote(kind.id),
+      });
+
+      this.addCommand({
+        id: `insert-${kind.id}-metadata`,
+        name: `Insert ${kind.name.toLowerCase()} metadata`,
+        callback: () => this.insertMetadata(kind.id),
+      });
+    }
+
+    // Settings tab
+    this.addSettingTab(new MetadataSearchSettingTab(this.app, this));
 
     console.log(`Metadata Search: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
   }
@@ -51,68 +81,87 @@ export default class BookSearchPlugin extends Plugin {
     }
   }
 
-  // open modal for book search
-  async searchBookMetadata(query?: string): Promise<Book> {
-    const searchedBooks = await this.openBookSearchModal(query);
-    return await this.openBookSuggestModal(searchedBooks);
+  getKindSettings(kindId: string): MetadataKindSettings {
+    if (!this.settings.kinds[kindId]) {
+      const providers = registry.getProvidersForKind(kindId);
+      this.settings.kinds[kindId] = {
+        ...DEFAULT_KIND_SETTINGS,
+        selectedProvider: providers[0]?.id || '',
+        providerSettings: {},
+      };
+    }
+    return this.settings.kinds[kindId];
   }
 
-  async getRenderedContents(book: Book) {
-    const {
-      templateFile,
-      useDefaultFrontmatter,
-      defaultFrontmatterKeyType,
-      enableCoverImageSave,
-      coverImagePath,
-      frontmatter, // @deprecated
-      content, // @deprecated
-    } = this.settings;
-
-    let contentBody = '';
-
-    if (enableCoverImageSave) {
-      const coverImageUrl = book.coverUrl;
-      if (coverImageUrl) {
-        const imageName = makeFileName(book, this.settings.fileNameFormat, 'jpg');
-        book.localCoverImage = await this.downloadAndSaveImage(imageName, coverImagePath, coverImageUrl);
-      }
+  private ensureKindDefaults(): void {
+    for (const kind of registry.getKinds()) {
+      this.getKindSettings(kind.id);
     }
+  }
+
+  private createProviderForKind(kindId: string): MetadataProvider {
+    const kindSettings = this.getKindSettings(kindId);
+    const providerId = kindSettings.selectedProvider;
+    if (!providerId) {
+      throw new Error(`No provider selected for ${kindId}.`);
+    }
+    const providerSettings = kindSettings.providerSettings[providerId] || {};
+    const provider = registry.createProvider(providerId, providerSettings);
+    provider.validate();
+    return provider;
+  }
+
+  private getKind(kindId: string): MetadataKind {
+    const kind = registry.getKind(kindId);
+    if (!kind) {
+      throw new Error(`Metadata kind '${kindId}' not found.`);
+    }
+    return kind;
+  }
+
+  // Search flow: open search modal → get results
+  async searchMetadata(provider: MetadataProvider, query?: string): Promise<SearchResult[]> {
+    return new Promise((resolve, reject) => {
+      new SearchModal(this, provider, query || '', (error, results) => {
+        return error ? reject(error) : resolve(results);
+      }).open();
+    });
+  }
+
+  // Suggest flow: show results → pick one
+  async suggestResult(
+    kind: MetadataKind,
+    kindSettings: MetadataKindSettings,
+    results: SearchResult[],
+  ): Promise<SearchResult> {
+    return new Promise((resolve, reject) => {
+      new MetadataSuggestModal(this.app, kind, kindSettings.showCoverImageInSearch, results, (error, selected) => {
+        return error ? reject(error) : resolve(selected);
+      }).open();
+    });
+  }
+
+  async getRenderedContents(result: SearchResult, kindSettings: MetadataKindSettings): Promise<string> {
+    const { templateFile } = kindSettings;
 
     if (templateFile) {
       const templateContents = await getTemplateContents(this.app, templateFile);
-      const replacedVariable = replaceVariableSyntax(book, applyTemplateTransformations(templateContents));
-      contentBody += executeInlineScriptsTemplates(book, replacedVariable);
-    } else {
-      let replacedVariableFrontmatter = replaceVariableSyntax(book, frontmatter); // @deprecated
-      if (useDefaultFrontmatter) {
-        replacedVariableFrontmatter = toStringFrontMatter(
-          applyDefaultFrontMatter(book, replacedVariableFrontmatter, defaultFrontmatterKeyType),
-        );
-      }
-      const replacedVariableContent = replaceVariableSyntax(book, content);
-      contentBody += replacedVariableFrontmatter
-        ? `---\n${replacedVariableFrontmatter}\n---\n${replacedVariableContent}`
-        : replacedVariableContent;
+      const transformed = applyTemplateTransformations(templateContents);
+      const replaced = replaceVariableSyntax(result, transformed);
+      return executeInlineScriptsTemplates(result, replaced);
     }
 
-    return contentBody;
+    // Default: generate YAML frontmatter from the search result
+    const frontmatter = toStringFrontMatter(result);
+    return frontmatter ? `---\n${frontmatter}\n---\n` : '';
   }
 
   async downloadAndSaveImage(imageName: string, directory: string, imageUrl: string): Promise<string> {
-    const { enableCoverImageSave } = this.settings;
-    if (!enableCoverImageSave) {
-      console.warn('Cover image saving is not enabled.');
-      return '';
-    }
-
     try {
-      // Use Obsidian's requestUrl method to fetch the image data:
       const response = await requestUrl({
         url: imageUrl,
         method: 'GET',
-        headers: {
-          Accept: 'image/*',
-        },
+        headers: { Accept: 'image/*' },
       });
 
       if (response.status !== 200) {
@@ -129,7 +178,7 @@ export default class BookSearchPlugin extends Plugin {
     }
   }
 
-  async insertMetadata(): Promise<void> {
+  async insertMetadata(kindId: string): Promise<void> {
     try {
       const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
       if (!markdownView) {
@@ -137,15 +186,22 @@ export default class BookSearchPlugin extends Plugin {
         return;
       }
 
-      // TODO: Try using a search query on the selected text
-      const book = await this.searchBookMetadata(markdownView.file.basename);
+      const kind = this.getKind(kindId);
+      const kindSettings = this.getKindSettings(kindId);
+      const provider = this.createProviderForKind(kindId);
+
+      const results = await this.searchMetadata(provider, markdownView.file.basename);
+      const selected = await this.suggestResult(kind, kindSettings, results);
 
       if (!markdownView.editor) {
         console.warn('Can not find editor from the active markdown view');
         return;
       }
 
-      const renderedContents = await this.getRenderedContents(book);
+      // Handle cover image saving
+      await this.saveCoverImageIfEnabled(selected, kindSettings, kind);
+
+      const renderedContents = await this.getRenderedContents(selected, kindSettings);
       markdownView.editor.replaceRange(renderedContents, { line: 0, ch: 0 });
     } catch (err) {
       console.warn(err);
@@ -153,30 +209,52 @@ export default class BookSearchPlugin extends Plugin {
     }
   }
 
-  async createNewBookNote(): Promise<void> {
+  async createNewNote(kindId: string): Promise<void> {
     try {
-      const book = await this.searchBookMetadata();
-      const renderedContents = await this.getRenderedContents(book);
+      const kind = this.getKind(kindId);
+      const kindSettings = this.getKindSettings(kindId);
+      const provider = this.createProviderForKind(kindId);
 
-      // TODO: If the same file exists, it asks if you want to overwrite it.
-      // create new File
-      const fileName = makeFileName(book, this.settings.fileNameFormat);
-      const filePath = `${this.settings.folder}/${fileName}`;
+      const results = await this.searchMetadata(provider);
+      const selected = await this.suggestResult(kind, kindSettings, results);
+
+      // Handle cover image saving
+      await this.saveCoverImageIfEnabled(selected, kindSettings, kind);
+
+      const renderedContents = await this.getRenderedContents(selected, kindSettings);
+
+      const fileNameFormat = kindSettings.fileNameFormat || kind.defaultFileNameFormat;
+      const fileName = makeFileName(selected, fileNameFormat);
+      const filePath = kindSettings.folder ? `${kindSettings.folder}/${fileName}` : fileName;
       const targetFile = await this.app.vault.create(filePath, renderedContents);
 
-      // if use Templater plugin
+      // Templater plugin support
       await useTemplaterPluginInFile(this.app, targetFile);
-      this.openNewBookNote(targetFile);
+      await this.openNewNote(targetFile);
     } catch (err) {
       console.warn(err);
       this.showNotice(err);
     }
   }
 
-  async openNewBookNote(targetFile: TFile) {
+  private async saveCoverImageIfEnabled(
+    result: SearchResult,
+    kindSettings: MetadataKindSettings,
+    kind: MetadataKind,
+  ): Promise<void> {
+    if (!kindSettings.enableCoverImageSave) return;
+
+    const coverUrl = result.coverUrl as string;
+    if (!coverUrl) return;
+
+    const fileNameFormat = kindSettings.fileNameFormat || kind.defaultFileNameFormat;
+    const imageName = makeFileName(result, fileNameFormat, 'jpg');
+    result.localCoverImage = await this.downloadAndSaveImage(imageName, kindSettings.coverImagePath, coverUrl);
+  }
+
+  async openNewNote(targetFile: TFile) {
     if (!this.settings.openPageOnCompletion) return;
 
-    // open file
     const activeLeaf = this.app.workspace.getLeaf();
     if (!activeLeaf) {
       console.warn('No active leaf');
@@ -185,28 +263,15 @@ export default class BookSearchPlugin extends Plugin {
 
     await activeLeaf.openFile(targetFile, { state: { mode: 'source' } });
     activeLeaf.setEphemeralState({ rename: 'all' });
-    // cursor focus
     await new CursorJumper(this.app).jumpToNextCursorLocation();
-  }
-
-  async openBookSearchModal(query = ''): Promise<Book[]> {
-    return new Promise((resolve, reject) => {
-      return new BookSearchModal(this, query, (error, results) => {
-        return error ? reject(error) : resolve(results);
-      }).open();
-    });
-  }
-
-  async openBookSuggestModal(books: Book[]): Promise<Book> {
-    return new Promise((resolve, reject) => {
-      return new BookSuggestModal(this.app, this.settings.showCoverImageInSearch, books, (error, selectedBook) => {
-        return error ? reject(error) : resolve(selectedBook);
-      }).open();
-    });
   }
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // Ensure kinds object exists
+    if (!this.settings.kinds) {
+      this.settings.kinds = {};
+    }
   }
 
   async saveSettings() {

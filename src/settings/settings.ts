@@ -1,108 +1,137 @@
-import { apiPost } from '@apis/base_api';
 import { replaceDateInString } from '@utils/utils';
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 
-import { ServiceProvider } from '@src/constants';
-import languages from '@utils/languages';
-import { SettingServiceProviderModal } from '@views/setting_service_provider_modal';
-import BookSearchPlugin from '../main';
+import { registry } from '@providers/registry';
+import MetadataSearchPlugin from '../main';
 import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
 import { FileSuggest } from './suggesters/FileSuggester';
 import { FolderSuggest } from './suggesters/FolderSuggester';
 
 const docUrl = 'https://github.com/fmartingr/obsidian-metadata-search-plugin';
 
-export enum DefaultFrontmatterKeyType {
-  snakeCase = 'Snake Case',
-  camelCase = 'Camel Case',
-}
-
-export interface BookSearchPluginSettings {
-  folder: string; // new file location
-  fileNameFormat: string; // new file name format
-  frontmatter: string; // frontmatter that is inserted into the file
-  content: string; // what is automatically written to the file.
-  useDefaultFrontmatter: boolean;
-  defaultFrontmatterKeyType: DefaultFrontmatterKeyType;
+export interface MetadataKindSettings {
+  enabled: boolean;
+  folder: string;
+  fileNameFormat: string;
   templateFile: string;
-  serviceProvider: ServiceProvider;
-  naverClientId: string;
-  naverClientSecret: string;
-  hardcoverApiToken: string;
-  localePreference: string;
-  apiKey: string;
-  openPageOnCompletion: boolean;
+  selectedProvider: string;
   showCoverImageInSearch: boolean;
   enableCoverImageSave: boolean;
-  enableCoverImageEdgeCurl: boolean;
   coverImagePath: string;
-  askForLocale: boolean;
+  providerSettings: Record<string, Record<string, string>>;
 }
 
-export const DEFAULT_SETTINGS: BookSearchPluginSettings = {
+export interface PluginSettings {
+  openPageOnCompletion: boolean;
+  kinds: Record<string, MetadataKindSettings>;
+}
+
+export const DEFAULT_KIND_SETTINGS: MetadataKindSettings = {
+  enabled: true,
   folder: '',
   fileNameFormat: '',
-  frontmatter: '',
-  content: '',
-  useDefaultFrontmatter: true,
-  defaultFrontmatterKeyType: DefaultFrontmatterKeyType.camelCase,
   templateFile: '',
-  serviceProvider: ServiceProvider.google,
-  naverClientId: '',
-  naverClientSecret: '',
-  hardcoverApiToken: '',
-  localePreference: 'default',
-  apiKey: '',
-  openPageOnCompletion: true,
+  selectedProvider: '',
   showCoverImageInSearch: false,
   enableCoverImageSave: false,
-  enableCoverImageEdgeCurl: true,
   coverImagePath: '',
-  askForLocale: true,
+  providerSettings: {},
 };
 
-export class BookSearchSettingTab extends PluginSettingTab {
+export const DEFAULT_SETTINGS: PluginSettings = {
+  openPageOnCompletion: true,
+  kinds: {},
+};
+
+export class MetadataSearchSettingTab extends PluginSettingTab {
   constructor(
     app: App,
-    private plugin: BookSearchPlugin,
+    private plugin: MetadataSearchPlugin,
   ) {
     super(app, plugin);
   }
 
-  private createGeneralSettings(containerEl) {
-    this.createHeader('General Settings', containerEl);
-    this.createFileLocationSetting(containerEl);
-    this.createFileNameFormatSetting(containerEl);
+  private getKindSettings(kindId: string): MetadataKindSettings {
+    return this.plugin.getKindSettings(kindId);
   }
 
-  private createHeader(title, containerEl) {
+  private saveSettings(): Promise<void> {
+    return this.plugin.saveSettings();
+  }
+
+  private createHeader(title: string, containerEl: HTMLElement): Setting {
     const header = document.createDocumentFragment();
     header.createEl('h2', { text: title });
     return new Setting(containerEl).setHeading().setName(header);
   }
 
-  private createFileLocationSetting(containerEl) {
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.classList.add('metadata-search-plugin__settings');
+
+    // == Global Settings ==
+    this.createHeader('General Settings', containerEl);
+
+    new Setting(containerEl)
+      .setName('Open new note on completion')
+      .setDesc('Automatically open the note after creation.')
+      .addToggle(toggle =>
+        toggle.setValue(this.plugin.settings.openPageOnCompletion).onChange(async value => {
+          this.plugin.settings.openPageOnCompletion = value;
+          await this.saveSettings();
+        }),
+      );
+
+    // == Per-Kind Settings ==
+    for (const kind of registry.getKinds()) {
+      const kindSettings = this.getKindSettings(kind.id);
+      this.renderKindSettings(containerEl, kind.id, kind.name, kindSettings);
+    }
+  }
+
+  private renderKindSettings(
+    containerEl: HTMLElement,
+    kindId: string,
+    kindName: string,
+    kindSettings: MetadataKindSettings,
+  ): void {
+    this.createHeader(kindName, containerEl);
+
+    // Enabled toggle
+    new Setting(containerEl)
+      .setName('Enabled')
+      .setDesc(`Enable ${kindName.toLowerCase()} metadata search.`)
+      .addToggle(toggle =>
+        toggle.setValue(kindSettings.enabled).onChange(async value => {
+          kindSettings.enabled = value;
+          await this.saveSettings();
+        }),
+      );
+
+    // New file location
     new Setting(containerEl)
       .setName('New file location')
-      .setDesc('New book notes will be placed here.')
+      .setDesc(`New ${kindName.toLowerCase()} notes will be placed here.`)
       .addSearch(cb => {
         try {
           new FolderSuggest(this.app, cb.inputEl);
         } catch (e) {
-          console.error(e); // Improved error handling
+          console.error(e);
         }
         cb.setPlaceholder('Example: folder1/folder2')
-          .setValue(this.plugin.settings.folder)
-          .onChange(new_folder => {
-            this.plugin.settings.folder = new_folder;
-            this.plugin.saveSettings();
+          .setValue(kindSettings.folder)
+          .onChange(async newFolder => {
+            kindSettings.folder = newFolder;
+            await this.saveSettings();
           });
       });
-  }
 
-  private createFileNameFormatSetting(containerEl) {
+    // File name format
+    const kind = registry.getKind(kindId);
+    const defaultFormat = kind?.defaultFileNameFormat || '{{title}}';
     const newFileNameHint = document.createDocumentFragment().createEl('code', {
-      text: replaceDateInString(this.plugin.settings.fileNameFormat) || '{{title}} - {{author}}',
+      text: replaceDateInString(kindSettings.fileNameFormat) || defaultFormat,
     });
     new Setting(containerEl)
       .setClass('metadata-search-plugin__settings--new_file_name')
@@ -112,15 +141,14 @@ export class BookSearchSettingTab extends PluginSettingTab {
         try {
           new FileNameFormatSuggest(this.app, cb.inputEl);
         } catch (e) {
-          console.error(e); // Improved error handling
+          console.error(e);
         }
-        cb.setPlaceholder('Example: {{title}} - {{author}}')
-          .setValue(this.plugin.settings.fileNameFormat)
-          .onChange(newValue => {
-            this.plugin.settings.fileNameFormat = newValue?.trim();
-            this.plugin.saveSettings();
-
-            newFileNameHint.innerHTML = replaceDateInString(newValue) || '{{title}} - {{author}}';
+        cb.setPlaceholder(`Example: ${defaultFormat}`)
+          .setValue(kindSettings.fileNameFormat)
+          .onChange(async newValue => {
+            kindSettings.fileNameFormat = newValue?.trim();
+            await this.saveSettings();
+            newFileNameHint.innerHTML = replaceDateInString(newValue) || defaultFormat;
           });
       });
     containerEl
@@ -128,11 +156,10 @@ export class BookSearchSettingTab extends PluginSettingTab {
         cls: ['setting-item-description', 'metadata-search-plugin__settings--new_file_name_hint'],
       })
       .append(newFileNameHint);
-  }
 
-  private createTemplateFileSetting(containerEl: HTMLElement) {
+    // Template file
     const templateFileDesc = document.createDocumentFragment();
-    templateFileDesc.createDiv({ text: 'Files will be available as templates.' });
+    templateFileDesc.createDiv({ text: 'Template file to use when creating notes.' });
     templateFileDesc.createEl('a', {
       text: 'Example Template',
       href: `${docUrl}#example-template`,
@@ -147,170 +174,39 @@ export class BookSearchSettingTab extends PluginSettingTab {
           // eslint-disable
         }
         cb.setPlaceholder('Example: templates/template-file')
-          .setValue(this.plugin.settings.templateFile)
-          .onChange(newTemplateFile => {
-            this.plugin.settings.templateFile = newTemplateFile;
-            this.plugin.saveSettings();
-          });
-      });
-  }
-
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.classList.add('metadata-search-plugin__settings');
-
-    this.createGeneralSettings(containerEl);
-    this.createTemplateFileSetting(containerEl);
-
-    // Service Provider
-    let serviceProviderExtraSettingButton: HTMLElement;
-    // eslint-disable-next-line prefer-const
-    let preferredLocaleDropdownSetting: Setting;
-    // eslint-disable-next-line prefer-const
-    let coverImageEdgeCurlToggleSetting: Setting;
-    const hideServiceProviderExtraSettingButton = () => {
-      serviceProviderExtraSettingButton.addClass('metadata-search-plugin__hide');
-    };
-    const showServiceProviderExtraSettingButton = () => {
-      serviceProviderExtraSettingButton.removeClass('metadata-search-plugin__hide');
-    };
-    const hideServiceProviderExtraSettingDropdown = () => {
-      if (preferredLocaleDropdownSetting !== undefined) {
-        preferredLocaleDropdownSetting.settingEl.addClass('metadata-search-plugin__hide');
-      }
-    };
-    const showServiceProviderExtraSettingDropdown = () => {
-      if (preferredLocaleDropdownSetting !== undefined) {
-        preferredLocaleDropdownSetting.settingEl.removeClass('metadata-search-plugin__hide');
-      }
-    };
-    const hideCoverImageEdgeCurlToggle = () => {
-      if (coverImageEdgeCurlToggleSetting !== undefined) {
-        coverImageEdgeCurlToggleSetting.settingEl.addClass('metadata-search-plugin__hide');
-      }
-    };
-    const showCoverImageEdgeCurlToggle = () => {
-      if (coverImageEdgeCurlToggleSetting !== undefined) {
-        coverImageEdgeCurlToggleSetting.settingEl.removeClass('metadata-search-plugin__hide');
-      }
-    };
-
-    const toggleServiceProviderExtraSettings = (
-      serviceProvider: ServiceProvider = this.plugin.settings?.serviceProvider,
-    ) => {
-      if (serviceProvider === ServiceProvider.naver) {
-        showServiceProviderExtraSettingButton();
-        hideServiceProviderExtraSettingDropdown();
-        hideCoverImageEdgeCurlToggle();
-      } else if (serviceProvider === ServiceProvider.hardcover) {
-        showServiceProviderExtraSettingButton();
-        hideServiceProviderExtraSettingDropdown();
-        hideCoverImageEdgeCurlToggle();
-      } else {
-        hideServiceProviderExtraSettingButton();
-        showServiceProviderExtraSettingDropdown();
-        showCoverImageEdgeCurlToggle();
-      }
-    };
-    new Setting(containerEl)
-      .setName('Service Provider')
-      .setDesc('Choose the service provider you want to use to search your books.')
-      .setClass('metadata-search-plugin__settings--service_provider')
-      .addDropdown(dropDown => {
-        dropDown.addOption(ServiceProvider.google, `${ServiceProvider.google} (Global)`);
-        dropDown.addOption(ServiceProvider.naver, `${ServiceProvider.naver} (Korean)`);
-        dropDown.addOption(ServiceProvider.hardcover, `${ServiceProvider.hardcover} (Global)`);
-        dropDown.setValue(this.plugin.settings?.serviceProvider ?? ServiceProvider.google);
-        dropDown.onChange(async value => {
-          const newValue = value as ServiceProvider;
-          toggleServiceProviderExtraSettings(newValue);
-          this.plugin.settings['serviceProvider'] = newValue;
-          await this.plugin.saveSettings();
-        });
-      })
-      .addExtraButton(component => {
-        serviceProviderExtraSettingButton = component.extraSettingsEl;
-        toggleServiceProviderExtraSettings();
-        component.onClick(() => {
-          new SettingServiceProviderModal(this.plugin).open();
-        });
-      });
-
-    preferredLocaleDropdownSetting = new Setting(containerEl)
-      .setName('Preferred locale')
-      .setDesc('Sets the preferred locale to use when searching for books.')
-      .addDropdown(dropDown => {
-        const defaultLocale = window.moment.locale();
-        dropDown.addOption(defaultLocale, `${languages[defaultLocale] || defaultLocale} (Default Locale)`);
-        window.moment.locales().forEach(locale => {
-          const localeName = languages[locale];
-          if (localeName && locale !== defaultLocale) dropDown.addOption(locale, localeName);
-        });
-        const localeValue = this.plugin.settings.localePreference;
-        dropDown
-          .setValue(localeValue === DEFAULT_SETTINGS.localePreference ? defaultLocale : localeValue)
-          .onChange(async value => {
-            const newValue = value;
-            this.plugin.settings.localePreference = newValue;
-            await this.plugin.saveSettings();
+          .setValue(kindSettings.templateFile)
+          .onChange(async newTemplateFile => {
+            kindSettings.templateFile = newTemplateFile;
+            await this.saveSettings();
           });
       });
 
+    // Show cover images in search
     new Setting(containerEl)
-      .setName('Open New Book Note')
-      .setDesc('Enable or disable the automatic opening of the note on creation.')
+      .setName('Show cover images in search')
+      .setDesc('Show cover images in the search results.')
       .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.openPageOnCompletion).onChange(async value => {
-          this.plugin.settings.openPageOnCompletion = value;
-          await this.plugin.saveSettings();
+        toggle.setValue(kindSettings.showCoverImageInSearch).onChange(async value => {
+          kindSettings.showCoverImageInSearch = value;
+          await this.saveSettings();
         }),
       );
 
+    // Enable cover image save
     new Setting(containerEl)
-      .setName('Show Cover Images in Search')
-      .setDesc('Toggle to show or hide cover images in the search results.')
+      .setName('Save cover images')
+      .setDesc('Download and save cover images alongside notes.')
       .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.showCoverImageInSearch).onChange(async value => {
-          this.plugin.settings.showCoverImageInSearch = value;
-          await this.plugin.saveSettings();
+        toggle.setValue(kindSettings.enableCoverImageSave).onChange(async value => {
+          kindSettings.enableCoverImageSave = value;
+          await this.saveSettings();
         }),
       );
 
-    // A toggle whether or not to ask for the locale every time a search is made
+    // Cover image path
     new Setting(containerEl)
-      .setName('Ask for Locale')
-      .setDesc('Toggle to enable or disable asking for the locale every time a search is made.')
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.askForLocale).onChange(async value => {
-          this.plugin.settings.askForLocale = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-
-    coverImageEdgeCurlToggleSetting = new Setting(containerEl)
-      .setName('Enable Cover Image Edge Curl Effect')
-      .setDesc('Toggle to show or hide page curl effect in cover images.')
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.enableCoverImageEdgeCurl).onChange(async value => {
-          this.plugin.settings.enableCoverImageEdgeCurl = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName('Enable Cover Image Save')
-      .setDesc('Toggle to enable or disable saving cover images in notes.')
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.enableCoverImageSave).onChange(async value => {
-          this.plugin.settings.enableCoverImageSave = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName('Cover Image Path')
-      .setDesc('Specify the path where cover images should be saved.')
+      .setName('Cover image path')
+      .setDesc('Path where cover images should be saved.')
       .addSearch(cb => {
         try {
           new FolderSuggest(this.app, cb.inputEl);
@@ -318,107 +214,109 @@ export class BookSearchSettingTab extends PluginSettingTab {
           // eslint-disable
         }
         cb.setPlaceholder('Enter the path (e.g., Images/Covers)')
-          .setValue(this.plugin.settings.coverImagePath)
+          .setValue(kindSettings.coverImagePath)
           .onChange(async value => {
-            this.plugin.settings.coverImagePath = value.trim();
-            await this.plugin.saveSettings();
+            kindSettings.coverImagePath = value.trim();
+            await this.saveSettings();
           });
       });
 
-    // Google API Settings
-    this.createHeader('Google API Settings', containerEl);
-    new Setting(containerEl)
-      .setName('Description About Google API Settings')
-      .setDesc(
-        '**WARNING** please use this field after you must understand Google Cloud API, such as API key security.',
-      );
+    // Provider selection
+    this.renderProviderSettings(containerEl, kindId, kindSettings);
 
+    // Template parameters info
+    if (kind) {
+      const paramsDesc = document.createDocumentFragment();
+      paramsDesc.createDiv({
+        text: `Available template parameters: ${kind.templateParameters.map(p => `{{${p}}}`).join(', ')}`,
+        cls: 'setting-item-description',
+      });
+      new Setting(containerEl).setName('Template parameters').setDesc(paramsDesc);
+    }
+  }
+
+  private renderProviderSettings(containerEl: HTMLElement, kindId: string, kindSettings: MetadataKindSettings): void {
+    const providers = registry.getProvidersForKind(kindId);
+    if (providers.length === 0) return;
+
+    // Provider-specific settings container (re-rendered when provider changes)
+    const providerSettingsContainer = containerEl.createDiv();
+
+    const renderCurrentProviderSettings = () => {
+      providerSettingsContainer.empty();
+      const selectedId = kindSettings.selectedProvider;
+      const registration = registry.getProviderRegistration(selectedId);
+      if (!registration) return;
+
+      // Ensure provider settings exist
+      if (!kindSettings.providerSettings[selectedId]) {
+        kindSettings.providerSettings[selectedId] = {};
+      }
+      const providerSettings = kindSettings.providerSettings[selectedId];
+      const save = () => this.saveSettings();
+
+      // Render basic setting fields
+      for (const field of registration.settingDefinitions) {
+        if (field.type === 'password') {
+          // Password fields: don't show current value, use save button
+          const desc = document.createDocumentFragment();
+          desc.createDiv({ text: field.description });
+          desc.createDiv({
+            text: 'For security, the saved value is not shown.',
+          });
+          let tempValue = '';
+          new Setting(providerSettingsContainer)
+            .setName(field.name)
+            .setDesc(desc)
+            .addText(text => {
+              text.inputEl.type = 'password';
+              text.setValue('').onChange(value => {
+                tempValue = value;
+              });
+            })
+            .addButton(button => {
+              button.setButtonText('Save').onClick(async () => {
+                providerSettings[field.key] = tempValue;
+                await save();
+                new Notice(`${field.name} saved.`);
+              });
+            });
+        } else {
+          // Text fields: auto-save on change
+          new Setting(providerSettingsContainer)
+            .setName(field.name)
+            .setDesc(field.description)
+            .addText(text => {
+              text.setValue(providerSettings[field.key] || '').onChange(async value => {
+                providerSettings[field.key] = value;
+                await save();
+              });
+            });
+        }
+      }
+
+      // Render extra settings from the provider registration
+      if (registration.renderExtraSettings) {
+        registration.renderExtraSettings(providerSettingsContainer, providerSettings, save);
+      }
+    };
+
+    // Provider dropdown
     new Setting(containerEl)
-      .setName('Status Check')
-      .setDesc('check whether API key is saved. It does not guarantee that the API key is valid or invalid.')
-      .addButton(button => {
-        button.setButtonText('API Check').onClick(async () => {
-          if (this.plugin.settings.apiKey.length) {
-            new Notice('API key exist.');
-          } else {
-            new Notice('API key does not exist.');
-          }
+      .setName('Provider')
+      .setDesc('Choose the service provider for searching.')
+      .setClass('metadata-search-plugin__settings--service_provider')
+      .addDropdown(dropdown => {
+        for (const provider of providers) {
+          dropdown.addOption(provider.id, provider.name);
+        }
+        dropdown.setValue(kindSettings.selectedProvider).onChange(async value => {
+          kindSettings.selectedProvider = value;
+          await this.saveSettings();
+          renderCurrentProviderSettings();
         });
       });
 
-    const googleAPISetDesc = document.createDocumentFragment();
-    googleAPISetDesc.createDiv({ text: 'Set your Books API key.' });
-    googleAPISetDesc.createDiv({
-      text: 'For security reason, saved API key is not shown in this textarea after saved.',
-    });
-    let tempKeyValue = '';
-    new Setting(containerEl)
-      .setName('Set API Key')
-      .setDesc(googleAPISetDesc)
-      .addText(text => {
-        text.inputEl.type = 'password';
-        text.setValue('').onChange(async value => {
-          tempKeyValue = value;
-        });
-      })
-      .addButton(button => {
-        button.setButtonText('Save Key').onClick(async () => {
-          this.plugin.settings.apiKey = tempKeyValue;
-          await this.plugin.saveSettings();
-          new Notice('API key Saved');
-        });
-      });
-
-    // Hardcover API Settings
-    this.createHeader('Hardcover API Settings', containerEl);
-    new Setting(containerEl)
-      .setName('Description About Hardcover API Settings')
-      .setDesc('Configure your Hardcover.app API token to search books using the Hardcover service.');
-
-    new Setting(containerEl)
-      .setName('Status Check')
-      .setDesc('Verify connectivity and token validity against the Hardcover API.')
-      .addButton(button => {
-        button.setButtonText('Token Check').onClick(async () => {
-          const token = this.plugin.settings.hardcoverApiToken;
-          if (!token.length) {
-            new Notice('API token does not exist.');
-            return;
-          }
-          try {
-            await apiPost<{ data: { me: { id: number } } }>(
-              'https://api.hardcover.app/v1/graphql',
-              { query: '{ me { id } }' },
-              { Authorization: `Bearer ${token}` },
-            );
-            new Notice('Hardcover API connection successful.');
-          } catch {
-            new Notice('Hardcover API connection failed. Please check your token.');
-          }
-        });
-      });
-
-    const hardcoverAPISetDesc = document.createDocumentFragment();
-    hardcoverAPISetDesc.createDiv({ text: 'Set your Hardcover API token.' });
-    hardcoverAPISetDesc.createDiv({
-      text: 'For security reason, saved API token is not shown in this textarea after saved.',
-    });
-    let tempTokenValue = '';
-    new Setting(containerEl)
-      .setName('Set API Token')
-      .setDesc(hardcoverAPISetDesc)
-      .addText(text => {
-        text.inputEl.type = 'password';
-        text.setValue('').onChange(async value => {
-          tempTokenValue = value;
-        });
-      })
-      .addButton(button => {
-        button.setButtonText('Save Token').onClick(async () => {
-          this.plugin.settings.hardcoverApiToken = tempTokenValue;
-          await this.plugin.saveSettings();
-          new Notice('API token Saved');
-        });
-      });
+    renderCurrentProviderSettings();
   }
 }

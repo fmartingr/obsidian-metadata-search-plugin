@@ -28,13 +28,13 @@
   width: 100%;
 }
 
-.book-suggestion-item {
+.metadata-search-suggestion-item {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.book-cover-image {
+.metadata-search-cover-image {
   max-width: 100px;
   max-height: 100px;
   margin-right: 10px;
@@ -42,6 +42,6 @@
   border-radius: 3px;
 }
 
-.book-text-info {
+.metadata-search-text-info {
   flex-grow: 1;
 }
