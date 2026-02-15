@@ -3,23 +3,18 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/fmartingr/obsidian-metadata-search-plugin/release.yml?logo=github)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/fmartingr/obsidian-metadata-search-plugin?sort=semver)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/fmartingr/obsidian-metadata-search-plugin/total)
-[![Korean](https://img.shields.io/badge/Language-한국어-blueviolet)](README.ko.md)
 
-Easily create book notes.
+Forked from https://github.com/anpigon/obsidian-book-search-plugin
 
-<br>
+Easily create book notes on your Obsidian Vault.
 
 ## Changelog
 
 To view the changelog for the latest and previous versions, please click [here](https://github.com/fmartingr/obsidian-metadata-search-plugin/releases) to visit the GitHub releases page for the Obsidian Metadata Search Plugin.
 
-<br>
-
 ## Demo
 
 https://user-images.githubusercontent.com/3969643/184918274-8ad24546-2e01-4288-a855-c8eeb1feca7d.mp4
-
-<br>
 
 ## Description
 
@@ -28,8 +23,6 @@ Use to query book using :
 - A book title, author, publisher or ISBN (10 or 13).
 
 Use Google Books API to get the book information.
-
-<br>
 
 ## How to install
 
@@ -83,7 +76,6 @@ For those who enable this feature, we've added CSS styling to ensure that cover 
 }
 ```
 
-<br>
 
 ## How to use
 
@@ -103,7 +95,6 @@ For those who enable this feature, we've added CSS styling to ensure that cover 
 
 <img width="600" src="https://user-images.githubusercontent.com/3969643/161974593-1b7bfe69-cb9d-47d7-a43d-1d725295a122.png">
 
-<br>
 
 ## How to use settings
 
@@ -170,7 +161,6 @@ updated: {{DATE:YYYY-MM-DD HH:mm:ss}}
 
 ```
 
-<br>
 
 ## Dataview rendering
 
@@ -208,7 +198,6 @@ SORT status DESC, file.ctime ASC
 
 The banner at the top of the document is rendered using [Obsidian-banners](https://github.com/noatpad/obsidian-banners) plugin.
 
-<br>
 
 ## Template variables definitions
 
@@ -232,7 +221,6 @@ Please find here a definition of the possible variables to be used in your templ
 | isbn10          | ISBN10                                                                                                                                             |
 | isbn13          | ISBN13                                                                                                                                             |
 
-<br>
 
 ## Advanced
 
@@ -301,13 +289,11 @@ Here's how to create and use one:
 - Once added, click on "Save", then "API Check"
 
 
-<br>
 
 ## License
 
 [Obsidian Metadata Search Plugin](https://github.com/fmartingr/obsidian-metadata-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
 
-<br>
 
 ## Contributing
 
@@ -340,7 +326,6 @@ bun run build
 
 The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-metadata-search-plugin/` for local testing.
 
-<br>
 
 ## Support
 
