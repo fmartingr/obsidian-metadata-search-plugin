@@ -1,18 +1,64 @@
+/* Settings */
 .metadata-search-plugin__settings .search-input-container {
   width: 100%;
 }
 
-.metadata-search-plugin__settings--new_file_name {
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
 .metadata-search-plugin__settings--new_file_name_hint {
-  margin-bottom: 20px;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: var(--font-smallest);
 }
+
+.metadata-search-plugin__settings--new_file_name_hint code {
+  font-size: var(--font-smallest);
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+}
+
 .metadata-search-plugin__settings--service_provider .dropdown {
   text-transform: capitalize;
 }
 
+/* Kind group container */
+.metadata-search-plugin__kind-group {
+  border-left: 3px solid var(--interactive-accent);
+  padding-left: 16px;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+/* Settings subheadings */
+.metadata-search-plugin__subheading {
+  margin-top: 20px;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 4px;
+}
+
+/* Template parameter tags */
+.metadata-search-plugin__params-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.metadata-search-plugin__param-tag {
+  font-size: var(--font-smallest);
+  background: var(--background-modifier-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  color: var(--text-muted);
+}
+
+/* Visibility */
 .metadata-search-plugin__hide {
   display: none;
 }
@@ -21,13 +67,16 @@
   display: flex;
 }
 
+/* Search modal */
 .metadata-search-plugin__search-modal--input {
   padding-bottom: 18px;
 }
+
 .metadata-search-plugin__search-modal--input input {
   width: 100%;
 }
 
+/* Suggest modal */
 .metadata-search-suggestion-item {
   display: flex;
   align-items: center;

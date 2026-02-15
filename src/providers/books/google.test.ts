@@ -35,7 +35,7 @@ describe('GoogleBooksProvider', () => {
       canonicalVolumeLink: 'https://play.google.com/store/books/details?id=QVjPsd1UukEC',
     };
 
-    const provider = new GoogleBooksProvider({ enableCoverImageEdgeCurl: 'true' });
+    const provider = new GoogleBooksProvider({});
     // Access private method for testing
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: SearchResult = (provider as any).createResultItem(volumeInfo);
@@ -85,15 +85,10 @@ describe('GoogleBooksProvider', () => {
       expect(result.link).toEqual(volumeInfo.canonicalVolumeLink);
     });
 
-    it('includes edge curl when enabled', () => {
-      expect(result.coverUrl).toContain('edge=curl');
-    });
-
-    it('disables edge curl', () => {
-      const noEdgeProvider = new GoogleBooksProvider({ enableCoverImageEdgeCurl: 'false' });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const noEdgeResult: SearchResult = (noEdgeProvider as any).createResultItem(volumeInfo);
-      expect(noEdgeResult.coverUrl).not.toContain('edge=curl');
+    it('always removes edge curl from cover URLs', () => {
+      expect(result.coverUrl).not.toContain('edge=curl');
+      expect(result.coverSmallUrl).not.toContain('edge=curl');
+      expect(result.coverMediumUrl).not.toContain('edge=curl');
     });
   });
 

@@ -18,13 +18,11 @@ export class GoogleBooksProvider implements MetadataProvider {
   private readonly apiKey: string;
   private readonly localePreference: string;
   private readonly askForLocale: boolean;
-  private readonly enableCoverImageEdgeCurl: boolean;
 
   constructor(private readonly settings: Record<string, string>) {
     this.apiKey = settings.apiKey || '';
     this.localePreference = settings.localePreference || 'default';
     this.askForLocale = settings.askForLocale !== 'false';
-    this.enableCoverImageEdgeCurl = settings.enableCoverImageEdgeCurl !== 'false';
   }
 
   getSupportedParameters(): string[] {
@@ -99,12 +97,12 @@ export class GoogleBooksProvider implements MetadataProvider {
       publisher: item.publisher ?? '',
       publishDate: item.publishedDate ?? '',
       totalPage: item.pageCount ?? '',
-      coverUrl: this.setCoverImageEdgeCurl(
+      coverUrl: this.sanitizeCoverUrl(
         images?.extraLarge ?? (baseUrl ? GoogleBooksProvider.convertImageURLSize(baseUrl, 6) : ''),
       ),
-      coverSmallUrl: this.setCoverImageEdgeCurl(images?.smallThumbnail ?? ''),
-      coverMediumUrl: this.setCoverImageEdgeCurl(images?.thumbnail ?? ''),
-      coverLargeUrl: this.setCoverImageEdgeCurl(images?.extraLarge ?? images?.large ?? ''),
+      coverSmallUrl: this.sanitizeCoverUrl(images?.smallThumbnail ?? ''),
+      coverMediumUrl: this.sanitizeCoverUrl(images?.thumbnail ?? ''),
+      coverLargeUrl: this.sanitizeCoverUrl(images?.extraLarge ?? images?.large ?? ''),
       description: item.description ?? '',
       link: item.canonicalVolumeLink || item.infoLink || '',
       previewLink: item.previewLink ?? '',
@@ -129,14 +127,12 @@ export class GoogleBooksProvider implements MetadataProvider {
     return list && list.length > 1 ? list.map(item => item.trim()).join(', ') : (list?.[0] ?? '');
   }
 
-  private setCoverImageEdgeCurl(url: string): string {
+  private sanitizeCoverUrl(url: string): string {
     if (!url) return url;
     try {
       const urlObj = new URL(url);
       urlObj.protocol = 'https:';
-      if (!this.enableCoverImageEdgeCurl) {
-        urlObj.searchParams.delete('edge');
-      }
+      urlObj.searchParams.delete('edge');
       return urlObj.toString();
     } catch {
       return url;
@@ -193,17 +189,6 @@ export const googleBooksRegistration: ProviderRegistration = {
       .addToggle(toggle => {
         toggle.setValue(settings.askForLocale !== 'false').onChange(async value => {
           settings.askForLocale = String(value);
-          await save();
-        });
-      });
-
-    // Edge curl toggle
-    new Setting(containerEl)
-      .setName('Cover image edge curl')
-      .setDesc('Show page curl effect in Google Books cover images.')
-      .addToggle(toggle => {
-        toggle.setValue(settings.enableCoverImageEdgeCurl !== 'false').onChange(async value => {
-          settings.enableCoverImageEdgeCurl = String(value);
           await save();
         });
       });
