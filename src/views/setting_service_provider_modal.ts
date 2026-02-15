@@ -35,6 +35,12 @@ export class SettingServiceProviderModal extends Modal {
     }
   }
 
+  saveApiToken(apiToken: string) {
+    if (this.currentServiceProvider === ServiceProvider.hardcover) {
+      this.settings['hardcoverApiToken'] = apiToken;
+    }
+  }
+
   get currentClientId() {
     if (this.currentServiceProvider === ServiceProvider.naver) {
       return this.settings.naverClientId;
@@ -49,18 +55,32 @@ export class SettingServiceProviderModal extends Modal {
     return '';
   }
 
+  get currentApiToken() {
+    if (this.currentServiceProvider === ServiceProvider.hardcover) {
+      return this.settings.hardcoverApiToken;
+    }
+    return '';
+  }
+
   onOpen() {
     const { contentEl } = this;
 
     contentEl.createEl('h2', { text: 'Service Provider Setting' });
 
-    new Setting(contentEl).setName('Client ID').addText(text => {
-      text.setValue(this.currentClientId).onChange(value => this.saveClientId(value));
-    });
+    if (this.currentServiceProvider === ServiceProvider.hardcover) {
+      new Setting(contentEl).setName('API Token').addText(text => {
+        text.inputEl.type = 'password';
+        text.setValue(this.currentApiToken).onChange(value => this.saveApiToken(value));
+      });
+    } else {
+      new Setting(contentEl).setName('Client ID').addText(text => {
+        text.setValue(this.currentClientId).onChange(value => this.saveClientId(value));
+      });
 
-    new Setting(contentEl).setName('Client Secret').addText(text => {
-      text.setValue(this.currentClientSecret).onChange(value => this.saveClientSecret(value));
-    });
+      new Setting(contentEl).setName('Client Secret').addText(text => {
+        text.setValue(this.currentClientSecret).onChange(value => this.saveClientSecret(value));
+      });
+    }
 
     new Setting(contentEl).addButton(btn =>
       btn

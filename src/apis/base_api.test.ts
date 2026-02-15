@@ -1,5 +1,6 @@
 import { factoryServiceProvider } from './base_api';
 import { GoogleBooksApi } from './google_books_api';
+import { HardcoverBooksApi } from './hardcover_books_api';
 import { NaverBooksApi } from './naver_books_api';
 import { ServiceProvider } from '@src/constants';
 import { BookSearchPluginSettings } from '@settings/settings';
@@ -16,6 +17,7 @@ function makeSettings(overrides: Partial<BookSearchPluginSettings>): BookSearchP
     serviceProvider: ServiceProvider.google,
     naverClientId: '',
     naverClientSecret: '',
+    hardcoverApiToken: '',
     localePreference: 'default',
     apiKey: '',
     openPageOnCompletion: false,
@@ -50,6 +52,23 @@ describe('factoryServiceProvider', () => {
       serviceProvider: ServiceProvider.naver,
       naverClientId: '',
       naverClientSecret: '',
+    });
+    expect(() => factoryServiceProvider(settings)).toThrow();
+  });
+
+  it('returns HardcoverBooksApi for hardcover provider with valid token', () => {
+    const settings = makeSettings({
+      serviceProvider: ServiceProvider.hardcover,
+      hardcoverApiToken: 'test-token',
+    });
+    const api = factoryServiceProvider(settings);
+    expect(api).toBeInstanceOf(HardcoverBooksApi);
+  });
+
+  it('throws when hardcover provider has empty token', () => {
+    const settings = makeSettings({
+      serviceProvider: ServiceProvider.hardcover,
+      hardcoverApiToken: '',
     });
     expect(() => factoryServiceProvider(settings)).toThrow();
   });
