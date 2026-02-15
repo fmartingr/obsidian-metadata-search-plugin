@@ -1,3 +1,4 @@
+import { apiPost } from '@apis/base_api';
 import { replaceDateInString } from '@utils/utils';
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 
@@ -9,7 +10,7 @@ import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
 import { FileSuggest } from './suggesters/FileSuggester';
 import { FolderSuggest } from './suggesters/FolderSuggester';
 
-const docUrl = 'https://github.com/fmartingr/obsidian-book-search-plugin';
+const docUrl = 'https://github.com/fmartingr/obsidian-metadata-search-plugin';
 
 export enum DefaultFrontmatterKeyType {
   snakeCase = 'Snake Case',
@@ -27,6 +28,7 @@ export interface BookSearchPluginSettings {
   serviceProvider: ServiceProvider;
   naverClientId: string;
   naverClientSecret: string;
+  hardcoverApiToken: string;
   localePreference: string;
   apiKey: string;
   openPageOnCompletion: boolean;
@@ -48,6 +50,7 @@ export const DEFAULT_SETTINGS: BookSearchPluginSettings = {
   serviceProvider: ServiceProvider.google,
   naverClientId: '',
   naverClientSecret: '',
+  hardcoverApiToken: '',
   localePreference: 'default',
   apiKey: '',
   openPageOnCompletion: true,
@@ -102,7 +105,7 @@ export class BookSearchSettingTab extends PluginSettingTab {
       text: replaceDateInString(this.plugin.settings.fileNameFormat) || '{{title}} - {{author}}',
     });
     new Setting(containerEl)
-      .setClass('book-search-plugin__settings--new_file_name')
+      .setClass('metadata-search-plugin__settings--new_file_name')
       .setName('New file name')
       .setDesc('Enter the file name format.')
       .addSearch(cb => {
@@ -122,7 +125,7 @@ export class BookSearchSettingTab extends PluginSettingTab {
       });
     containerEl
       .createEl('div', {
-        cls: ['setting-item-description', 'book-search-plugin__settings--new_file_name_hint'],
+        cls: ['setting-item-description', 'metadata-search-plugin__settings--new_file_name_hint'],
       })
       .append(newFileNameHint);
   }
@@ -155,7 +158,7 @@ export class BookSearchSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.classList.add('book-search-plugin__settings');
+    containerEl.classList.add('metadata-search-plugin__settings');
 
     this.createGeneralSettings(containerEl);
     this.createTemplateFileSetting(containerEl);
@@ -167,29 +170,29 @@ export class BookSearchSettingTab extends PluginSettingTab {
     // eslint-disable-next-line prefer-const
     let coverImageEdgeCurlToggleSetting: Setting;
     const hideServiceProviderExtraSettingButton = () => {
-      serviceProviderExtraSettingButton.addClass('book-search-plugin__hide');
+      serviceProviderExtraSettingButton.addClass('metadata-search-plugin__hide');
     };
     const showServiceProviderExtraSettingButton = () => {
-      serviceProviderExtraSettingButton.removeClass('book-search-plugin__hide');
+      serviceProviderExtraSettingButton.removeClass('metadata-search-plugin__hide');
     };
     const hideServiceProviderExtraSettingDropdown = () => {
       if (preferredLocaleDropdownSetting !== undefined) {
-        preferredLocaleDropdownSetting.settingEl.addClass('book-search-plugin__hide');
+        preferredLocaleDropdownSetting.settingEl.addClass('metadata-search-plugin__hide');
       }
     };
     const showServiceProviderExtraSettingDropdown = () => {
       if (preferredLocaleDropdownSetting !== undefined) {
-        preferredLocaleDropdownSetting.settingEl.removeClass('book-search-plugin__hide');
+        preferredLocaleDropdownSetting.settingEl.removeClass('metadata-search-plugin__hide');
       }
     };
     const hideCoverImageEdgeCurlToggle = () => {
       if (coverImageEdgeCurlToggleSetting !== undefined) {
-        coverImageEdgeCurlToggleSetting.settingEl.addClass('book-search-plugin__hide');
+        coverImageEdgeCurlToggleSetting.settingEl.addClass('metadata-search-plugin__hide');
       }
     };
     const showCoverImageEdgeCurlToggle = () => {
       if (coverImageEdgeCurlToggleSetting !== undefined) {
-        coverImageEdgeCurlToggleSetting.settingEl.removeClass('book-search-plugin__hide');
+        coverImageEdgeCurlToggleSetting.settingEl.removeClass('metadata-search-plugin__hide');
       }
     };
 
@@ -197,6 +200,10 @@ export class BookSearchSettingTab extends PluginSettingTab {
       serviceProvider: ServiceProvider = this.plugin.settings?.serviceProvider,
     ) => {
       if (serviceProvider === ServiceProvider.naver) {
+        showServiceProviderExtraSettingButton();
+        hideServiceProviderExtraSettingDropdown();
+        hideCoverImageEdgeCurlToggle();
+      } else if (serviceProvider === ServiceProvider.hardcover) {
         showServiceProviderExtraSettingButton();
         hideServiceProviderExtraSettingDropdown();
         hideCoverImageEdgeCurlToggle();
@@ -209,10 +216,11 @@ export class BookSearchSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Service Provider')
       .setDesc('Choose the service provider you want to use to search your books.')
-      .setClass('book-search-plugin__settings--service_provider')
+      .setClass('metadata-search-plugin__settings--service_provider')
       .addDropdown(dropDown => {
         dropDown.addOption(ServiceProvider.google, `${ServiceProvider.google} (Global)`);
         dropDown.addOption(ServiceProvider.naver, `${ServiceProvider.naver} (Korean)`);
+        dropDown.addOption(ServiceProvider.hardcover, `${ServiceProvider.hardcover} (Global)`);
         dropDown.setValue(this.plugin.settings?.serviceProvider ?? ServiceProvider.google);
         dropDown.onChange(async value => {
           const newValue = value as ServiceProvider;
@@ -358,6 +366,58 @@ export class BookSearchSettingTab extends PluginSettingTab {
           this.plugin.settings.apiKey = tempKeyValue;
           await this.plugin.saveSettings();
           new Notice('API key Saved');
+        });
+      });
+
+    // Hardcover API Settings
+    this.createHeader('Hardcover API Settings', containerEl);
+    new Setting(containerEl)
+      .setName('Description About Hardcover API Settings')
+      .setDesc('Configure your Hardcover.app API token to search books using the Hardcover service.');
+
+    new Setting(containerEl)
+      .setName('Status Check')
+      .setDesc('Verify connectivity and token validity against the Hardcover API.')
+      .addButton(button => {
+        button.setButtonText('Token Check').onClick(async () => {
+          const token = this.plugin.settings.hardcoverApiToken;
+          if (!token.length) {
+            new Notice('API token does not exist.');
+            return;
+          }
+          try {
+            await apiPost<{ data: { me: { id: number } } }>(
+              'https://api.hardcover.app/v1/graphql',
+              { query: '{ me { id } }' },
+              { Authorization: `Bearer ${token}` },
+            );
+            new Notice('Hardcover API connection successful.');
+          } catch {
+            new Notice('Hardcover API connection failed. Please check your token.');
+          }
+        });
+      });
+
+    const hardcoverAPISetDesc = document.createDocumentFragment();
+    hardcoverAPISetDesc.createDiv({ text: 'Set your Hardcover API token.' });
+    hardcoverAPISetDesc.createDiv({
+      text: 'For security reason, saved API token is not shown in this textarea after saved.',
+    });
+    let tempTokenValue = '';
+    new Setting(containerEl)
+      .setName('Set API Token')
+      .setDesc(hardcoverAPISetDesc)
+      .addText(text => {
+        text.inputEl.type = 'password';
+        text.setValue('').onChange(async value => {
+          tempTokenValue = value;
+        });
+      })
+      .addButton(button => {
+        button.setButtonText('Save Token').onClick(async () => {
+          this.plugin.settings.hardcoverApiToken = tempTokenValue;
+          await this.plugin.saveSettings();
+          new Notice('API token Saved');
         });
       });
   }

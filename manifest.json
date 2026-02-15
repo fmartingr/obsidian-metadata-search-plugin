@@ -1,6 +1,6 @@
 {
-	"id": "obsidian-book-search-plugin",
-	"name": "Book Search",
+	"id": "obsidian-metadata-search-plugin",
+	"name": "Metadata Search",
 	"minAppVersion": "0.15.0",
 	"description": "Helps you find books and create notes.",
 	"author": "fmartingr",

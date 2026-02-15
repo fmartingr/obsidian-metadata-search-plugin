@@ -1,8 +1,8 @@
-# Obsidian Book Search Plugin
+# Obsidian Metadata Search Plugin
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/fmartingr/obsidian-book-search-plugin/release.yml?logo=github)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/fmartingr/obsidian-book-search-plugin?sort=semver)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/fmartingr/obsidian-book-search-plugin/total)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/fmartingr/obsidian-metadata-search-plugin/release.yml?logo=github)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/fmartingr/obsidian-metadata-search-plugin?sort=semver)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/fmartingr/obsidian-metadata-search-plugin/total)
 [![Korean](https://img.shields.io/badge/Language-한국어-blueviolet)](README.ko.md)
 
 Easily create book notes.
@@ -11,7 +11,7 @@ Easily create book notes.
 
 ## Changelog
 
-To view the changelog for the latest and previous versions, please click [here](https://github.com/fmartingr/obsidian-book-search-plugin/releases) to visit the GitHub releases page for the Obsidian Book Search Plugin.
+To view the changelog for the latest and previous versions, please click [here](https://github.com/fmartingr/obsidian-metadata-search-plugin/releases) to visit the GitHub releases page for the Obsidian Metadata Search Plugin.
 
 <br>
 
@@ -33,7 +33,7 @@ Use Google Books API to get the book information.
 
 ## How to install
 
-Click the link to install the Book Search plugin: [Install Link](https://obsidian.md/plugins?id=obsidian-book-search-plugin)
+Click the link to install the Metadata Search plugin: [Install Link](https://obsidian.md/plugins?id=obsidian-metadata-search-plugin)
 
 Or, Search in the Obsidian Community plugin. And install it.
 
@@ -297,7 +297,7 @@ Here's how to create and use one:
 - Enable the Books API for your project using the [Books API page](https://console.cloud.google.com/apis/library/books.googleapis.com)
 - Create an API key for your Google Cloud project using the [Google Cloud Credentials](https://console.cloud.google.com/apis/credentials) page
 - To limit the security risks of losing that key, you can edit it, and click on "Restrict key" under "API restrictions", then select only the "Books API" API
-- Add the API key to the settings of the Book Search plugin, under "Set API Key"
+- Add the API key to the settings of the Metadata Search plugin, under "Set API Key"
 - Once added, click on "Save", then "API Check"
 
 
@@ -305,7 +305,7 @@ Here's how to create and use one:
 
 ## License
 
-[Obsidian Book Search Plugin](https://github.com/fmartingr/obsidian-book-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
+[Obsidian Metadata Search Plugin](https://github.com/fmartingr/obsidian-metadata-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
 
 <br>
 
@@ -313,9 +313,9 @@ Here's how to create and use one:
 
 Feel free to contribute.
 
-You can create an [issue](https://github.com/fmartingr/obsidian-book-search-plugin/issues) to report a bug, suggest an improvement for this plugin, ask a question, etc.
+You can create an [issue](https://github.com/fmartingr/obsidian-metadata-search-plugin/issues) to report a bug, suggest an improvement for this plugin, ask a question, etc.
 
-You can make a [pull request](https://github.com/fmartingr/obsidian-book-search-plugin/pulls) to contribute to this plugin development.
+You can make a [pull request](https://github.com/fmartingr/obsidian-metadata-search-plugin/pulls) to contribute to this plugin development.
 
 ### Development
 
@@ -338,7 +338,7 @@ bun run test
 bun run build
 ```
 
-The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-book-search-plugin/` for local testing.
+The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-metadata-search-plugin/` for local testing.
 
 <br>
 

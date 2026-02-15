@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-book-search-plugin",
+	"name": "obsidian-metadata-search-plugin",
 	"description": "This is a plugin to help you create book notes.",
-	"homepage": "https://fmartingr.github.io/obsidian-book-search-plugin/",
+	"homepage": "https://fmartingr.github.io/obsidian-metadata-search-plugin/",
 	"keywords": [
 		"book",
 		"book note",
