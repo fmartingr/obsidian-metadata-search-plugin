@@ -30,6 +30,22 @@ export const booksKind: MetadataKind = {
   description: 'Search and create notes for books.',
   templateParameters: BOOKS_TEMPLATE_PARAMETERS,
   defaultFileNameFormat: '{{title}} - {{author}}',
+  defaultFrontmatterFields: [
+    'title',
+    'subtitle',
+    'author',
+    'authors',
+    'categories',
+    'publisher',
+    'publishDate',
+    'totalPage',
+    'coverUrl',
+    'localCoverImage',
+    'isbn13',
+    'isbn10',
+    'description',
+    'link',
+  ],
 
   renderSuggestion(result: SearchResult, el: HTMLElement, showCoverImage: boolean): void {
     el.addClass('metadata-search-suggestion-item');

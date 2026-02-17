@@ -45,7 +45,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 
 /** Sample values used to preview file name format in settings. */
 const FILE_NAME_PREVIEW_VALUES: Record<string, string> = {
-  title: 'Book Title',
+  // Books
+  title: 'Sample Title',
   subtitle: 'A Subtitle',
   author: 'Author Name',
   authors: 'Author One, Author Two',
@@ -55,6 +56,16 @@ const FILE_NAME_PREVIEW_VALUES: Record<string, string> = {
   totalPage: '300',
   isbn10: '0123456789',
   isbn13: '9780123456789',
+  // Games
+  releaseDate: '2025-01-15',
+  rating: '4.5',
+  metacritic: '92',
+  playtime: '40',
+  genre: 'Action, Adventure',
+  platform: 'PC, PlayStation 5',
+  developer: 'Studio Name',
+  esrbRating: 'Mature',
+  slug: 'sample-title',
 };
 
 /**

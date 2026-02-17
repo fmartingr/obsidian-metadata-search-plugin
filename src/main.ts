@@ -6,6 +6,8 @@ import { booksKind } from '@providers/books/kind';
 import { googleBooksRegistration } from '@providers/books/google';
 import { naverBooksRegistration } from '@providers/books/naver';
 import { hardcoverBooksRegistration } from '@providers/books/hardcover';
+import { gamesKind } from '@providers/games/kind';
+import { rawgGamesRegistration } from '@providers/games/rawg';
 
 import { SearchModal } from '@views/search_modal';
 import { MetadataSuggestModal } from '@views/suggest_modal';
@@ -28,11 +30,13 @@ import { replaceVariableSyntax, makeFileName, toStringFrontMatter } from '@utils
 function registerAllProviders() {
   // Register metadata kinds
   registry.registerKind(booksKind);
+  registry.registerKind(gamesKind);
 
   // Register providers
   registry.registerProvider(googleBooksRegistration);
   registry.registerProvider(naverBooksRegistration);
   registry.registerProvider(hardcoverBooksRegistration);
+  registry.registerProvider(rawgGamesRegistration);
 }
 
 export default class MetadataSearchPlugin extends Plugin {
@@ -141,7 +145,11 @@ export default class MetadataSearchPlugin extends Plugin {
     });
   }
 
-  async getRenderedContents(result: SearchResult, kindSettings: MetadataKindSettings): Promise<string> {
+  async getRenderedContents(
+    result: SearchResult,
+    kindSettings: MetadataKindSettings,
+    kind: MetadataKind,
+  ): Promise<string> {
     const { templateFile } = kindSettings;
 
     if (templateFile) {
@@ -151,8 +159,18 @@ export default class MetadataSearchPlugin extends Plugin {
       return executeInlineScriptsTemplates(result, replaced);
     }
 
-    // Default: generate YAML frontmatter from the search result
-    const frontmatter = toStringFrontMatter(result);
+    // Default: generate YAML frontmatter using only the kind's default fields
+    const filtered: Record<string, unknown> = {};
+    for (const entry of kind.defaultFrontmatterFields) {
+      if (typeof entry === 'string') {
+        if (result[entry] !== undefined && result[entry] !== '') {
+          filtered[entry] = result[entry];
+        }
+      } else {
+        filtered[entry.key] = result[entry.key] ?? entry.defaultValue;
+      }
+    }
+    const frontmatter = toStringFrontMatter(filtered);
     return frontmatter ? `---\n${frontmatter}\n---\n` : '';
   }
 
@@ -201,7 +219,7 @@ export default class MetadataSearchPlugin extends Plugin {
       // Handle cover image saving
       await this.saveCoverImageIfEnabled(selected, kindSettings, kind);
 
-      const renderedContents = await this.getRenderedContents(selected, kindSettings);
+      const renderedContents = await this.getRenderedContents(selected, kindSettings, kind);
       markdownView.editor.replaceRange(renderedContents, { line: 0, ch: 0 });
     } catch (err) {
       console.warn(err);
@@ -221,7 +239,7 @@ export default class MetadataSearchPlugin extends Plugin {
       // Handle cover image saving
       await this.saveCoverImageIfEnabled(selected, kindSettings, kind);
 
-      const renderedContents = await this.getRenderedContents(selected, kindSettings);
+      const renderedContents = await this.getRenderedContents(selected, kindSettings, kind);
 
       const fileNameFormat = kindSettings.fileNameFormat || kind.defaultFileNameFormat;
       const fileName = makeFileName(selected, fileNameFormat);
@@ -249,7 +267,10 @@ export default class MetadataSearchPlugin extends Plugin {
 
     const fileNameFormat = kindSettings.fileNameFormat || kind.defaultFileNameFormat;
     const imageName = makeFileName(result, fileNameFormat, 'jpg');
-    result.localCoverImage = await this.downloadAndSaveImage(imageName, kindSettings.coverImagePath, coverUrl);
+    const savedPath = await this.downloadAndSaveImage(imageName, kindSettings.coverImagePath, coverUrl);
+    if (savedPath) {
+      result.localCoverImage = `[[${savedPath}]]`;
+    }
   }
 
   async openNewNote(targetFile: TFile) {

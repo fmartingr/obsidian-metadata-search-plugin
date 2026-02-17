@@ -69,4 +69,16 @@ describe('utils', () => {
     expect(yaml).not.toContain('empty');
     expect(yaml).not.toContain('undef');
   });
+
+  it('toStringFrontMatter quotes wikilinks', () => {
+    const data = { cover: '[[Images/cover.jpg]]' };
+    const yaml = utils.toStringFrontMatter(data);
+    expect(yaml).toContain('cover: "[[Images/cover.jpg]]"');
+  });
+
+  it('toStringFrontMatter quotes values with inline comments', () => {
+    const data = { note: 'something # not a comment' };
+    const yaml = utils.toStringFrontMatter(data);
+    expect(yaml).toContain('note: "something # not a comment"');
+  });
 });

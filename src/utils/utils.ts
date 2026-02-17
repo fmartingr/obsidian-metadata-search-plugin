@@ -33,6 +33,17 @@ export function replaceVariableSyntax(data: SearchResult, text: string): string 
     .trim();
 }
 
+/** Check whether a YAML value needs to be wrapped in quotes to avoid misinterpretation. */
+function yamlNeedsQuoting(value: string): boolean {
+  // Starts with YAML-special characters (flow sequences, mappings, anchors, etc.)
+  if (/^[\[{*&!|>'"%@`]/.test(value)) return true;
+  // Contains `: ` which YAML would interpret as a nested mapping
+  if (/:\s/.test(value)) return true;
+  // Contains ` #` which YAML would interpret as an inline comment
+  if (/ #/.test(value)) return true;
+  return false;
+}
+
 export function toStringFrontMatter(data: Record<string, unknown>): string {
   return Object.entries(data)
     .filter(([, value]) => value !== undefined && value !== '')
@@ -46,7 +57,7 @@ export function toStringFrontMatter(data: Record<string, unknown>): string {
       if (!newValue || /\r|\n/.test(newValue)) {
         return '';
       }
-      if (/:\s/.test(newValue)) {
+      if (yamlNeedsQuoting(newValue)) {
         return `${key}: "${newValue.replace(/"/g, '&quot;')}"\n`;
       }
       return `${key}: ${newValue}\n`;

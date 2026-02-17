@@ -53,6 +53,12 @@ export interface MetadataKind {
   readonly templateParameters: string[];
   /** Default file name format when user hasn't set one, e.g. '{{title}} - {{author}}' */
   readonly defaultFileNameFormat: string;
+  /**
+   * Fields to include in frontmatter when no template file is configured.
+   * Use a string for fields taken from the search result,
+   * or `{ key, defaultValue }` to add a static default.
+   */
+  readonly defaultFrontmatterFields: (string | { key: string; defaultValue: string })[];
   /** Render a suggestion item in the suggest modal */
   renderSuggestion(result: SearchResult, el: HTMLElement, showCoverImage: boolean): void;
 }
