@@ -23,8 +23,10 @@
 		"build": "bun run lint && bun run esbuild.config.mjs production",
 		"prepare": "husky",
 		"deploy:pages": "gh-pages -d pages",
-		"vault:install": "bun run scripts/install-to-vault.ts",
-		"vault:uninstall": "bun run scripts/uninstall-from-vault.ts"
+		"vault:install": "bun run build && bun run scripts/install-to-vault.ts",
+		"vault:uninstall": "bun run scripts/uninstall-from-vault.ts",
+		"vault:symlink": "bun run scripts/symlink-to-vault.ts",
+		"vault:unlink": "bun run scripts/unlink-from-vault.ts"
 	},
 	"devDependencies": {
 		"@popperjs/core": "^2.11.8",

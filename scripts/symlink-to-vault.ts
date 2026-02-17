@@ -1,4 +1,4 @@
-import { cpSync, existsSync, lstatSync, mkdirSync } from 'fs';
+import { existsSync, lstatSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
 import { resolve } from 'path';
 
 const manifest = await Bun.file('manifest.json').json();
@@ -8,7 +8,7 @@ const vaultPath = process.argv[2] || process.env.OBSIDIAN_VAULT;
 
 if (!vaultPath) {
   console.error(
-    'Usage: bun run scripts/install-to-vault.ts <vault-path>\n' + '  or set OBSIDIAN_VAULT environment variable',
+    'Usage: bun run scripts/symlink-to-vault.ts <vault-path>\n' + '  or set OBSIDIAN_VAULT environment variable',
   );
   process.exit(1);
 }
@@ -29,12 +29,19 @@ if (!existsSync(distDir)) {
 }
 
 if (existsSync(targetDir)) {
-  if (lstatSync(targetDir).isSymbolicLink()) {
-    console.error(`${targetDir} is a symlink. Run 'vault:uninstall-symlink' first.`);
+  const isSymlink = lstatSync(targetDir).isSymbolicLink();
+  if (isSymlink) {
+    const current = readlinkSync(targetDir);
+    if (current === distDir) {
+      console.log(`Already linked: ${targetDir} -> ${distDir}`);
+      process.exit(0);
+    }
+    unlinkSync(targetDir);
+  } else {
+    console.error(`${targetDir} already exists and is not a symlink. Remove it manually to proceed.`);
     process.exit(1);
   }
 }
 
-mkdirSync(targetDir, { recursive: true });
-cpSync(distDir, targetDir, { recursive: true });
-console.log(`Copied: ${distDir} -> ${targetDir}`);
+symlinkSync(distDir, targetDir, 'dir');
+console.log(`Linked: ${targetDir} -> ${distDir}`);

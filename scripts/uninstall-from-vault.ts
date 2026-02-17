@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, readlinkSync, unlinkSync } from 'fs';
+import { existsSync, lstatSync, rmSync } from 'fs';
 import { resolve } from 'path';
 
 const manifest = await Bun.file('manifest.json').json();
@@ -16,25 +16,16 @@ if (!vaultPath) {
 const resolvedVault = resolve(vaultPath);
 const pluginsDir = resolve(resolvedVault, '.obsidian', 'plugins');
 const targetDir = resolve(pluginsDir, pluginId);
-const distDir = resolve(import.meta.dir, '..', 'dist');
 
 if (!existsSync(targetDir)) {
   console.log(`Plugin not installed: ${targetDir} does not exist`);
   process.exit(0);
 }
 
-const stat = lstatSync(targetDir);
-
-if (!stat.isSymbolicLink()) {
-  console.error(`${targetDir} is not a symlink. Refusing to remove for safety.`);
+if (lstatSync(targetDir).isSymbolicLink()) {
+  console.error(`${targetDir} is a symlink, not a copied install. Use 'vault:uninstall-symlink' instead.`);
   process.exit(1);
 }
 
-const linkTarget = readlinkSync(targetDir);
-if (linkTarget !== distDir) {
-  console.error(`${targetDir} points to ${linkTarget}, not ${distDir}. Refusing to remove for safety.`);
-  process.exit(1);
-}
-
-unlinkSync(targetDir);
-console.log(`Removed symlink: ${targetDir}`);
+rmSync(targetDir, { recursive: true });
+console.log(`Removed: ${targetDir}`);
