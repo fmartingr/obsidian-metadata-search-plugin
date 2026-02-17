@@ -2,7 +2,7 @@
 	"id": "metadata-search",
 	"name": "Metadata Search",
 	"minAppVersion": "0.15.0",
-	"description": "llows creating and updating notes with properties for books and games automatically.",
+	"description": "Allows creating and updating notes with properties for books and games automatically.",
 	"author": "fmartingr",
 	"authorUrl": "https://github.com/fmartingr",
 	"isDesktopOnly": false
