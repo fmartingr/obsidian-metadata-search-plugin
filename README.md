@@ -4,169 +4,203 @@
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/fmartingr/obsidian-metadata-search-plugin?sort=semver)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/fmartingr/obsidian-metadata-search-plugin/total)
 
-Forked from https://github.com/anpigon/obsidian-book-search-plugin
+Search for metadata from external services and create notes in your Obsidian vault. Supports multiple metadata kinds (books, games) with pluggable providers for each.
 
-Easily create book notes on your Obsidian Vault.
+> Originally forked from [obsidian-book-search-plugin](https://github.com/anpigon/obsidian-book-search-plugin).
+
+## Features
+
+- **Books** — Search by title, author, publisher, or ISBN and create book notes.
+- **Games** — Search for video games and create game notes.
+- **Multiple providers per kind** — Choose the service that works best for you.
+- **Customisable templates** — Use template files with `{{variables}}` and inline scripts.
+- **Cover image saving** — Optionally download cover images into your vault.
+- **Per-kind settings** — Independent configuration for each metadata kind (folder, template, provider, etc.).
+
+## Supported providers
+
+| Kind  | Provider                                        | API key required? |
+| ----- | ----------------------------------------------- | ----------------- |
+| Books | [Google Books](https://books.google.com/)       | Optional          |
+| Books | [Naver Books](https://developers.naver.com/)    | Yes               |
+| Books | [Hardcover](https://hardcover.app/)             | Yes               |
+| Games | [RAWG](https://rawg.io/apidocs)                | Yes (free)        |
+| Games | [IGDB](https://api-docs.igdb.com/)              | Yes (Twitch)      |
 
 ## Changelog
 
-To view the changelog for the latest and previous versions, please click [here](https://github.com/fmartingr/obsidian-metadata-search-plugin/releases) to visit the GitHub releases page for the Obsidian Metadata Search Plugin.
+Visit the [GitHub Releases](https://github.com/fmartingr/obsidian-metadata-search-plugin/releases) page for the full changelog.
 
-## Demo
+## Installation
 
-https://user-images.githubusercontent.com/3969643/184918274-8ad24546-2e01-4288-a855-c8eeb1feca7d.mp4
+Search for **Metadata Search** in the Obsidian Community Plugins browser and click **Install**, or use this direct link:
 
-## Description
-
-Use to query book using :
-
-- A book title, author, publisher or ISBN (10 or 13).
-
-Use Google Books API to get the book information.
-
-## How to install
-
-Click the link to install the Metadata Search plugin: [Install Link](https://obsidian.md/plugins?id=obsidian-metadata-search-plugin)
-
-Or, Search in the Obsidian Community plugin. And install it.
-
-<img width="700" src="https://user-images.githubusercontent.com/3969643/184918934-585375a9-7b25-4905-81c8-5f092ed74991.png">
-
-### Enhancements: Cover Image Display in Search Results
-
-We've introduced a new setting in our plugin that allows users to display cover images alongside book suggestions in the search results. This feature aims to enrich the search experience by providing visual cues, making it easier for users to identify books at a glance. The cover images are designed to complement the textual information, offering a more engaging and intuitive search interface.
-
-By default, this feature is **disabled** to maintain a clean, text-focused search experience. Users who prefer to keep their search results streamlined without images will find the default setting optimized for their preference.
-
-#### Enabling Cover Images
-
-To activate cover images in your search results:
-
-1. Go to the plugin settings.
-2. Find the **"Show Cover Images in Search"** option.
-3. Switch the toggle to **on** to enable cover images.
-
-#### CSS Styling for Cover Images
-
-For those who enable this feature, we've added CSS styling to ensure that cover images are displayed effectively without disrupting the flow of information. To add this CSS snippet in Obsidian, you can either include it directly in your plugin's CSS file or insert it into Obsidian's custom CSS section for your vault. Here's how to add the CSS snippet for styling the book suggestions with cover images:
-
-1. Open Obsidian.
-2. Navigate to Settings > Appearance.
-3. Under the CSS Snippets section, click on Open snippets folder.
-4. Create a new .css file in this folder and paste the following CSS snippet into the file.
-5. Go back to Obsidian, and under CSS Snippets, turn on the snippet you just added.
-
-```css
-.book-suggestion-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.book-cover-image {
-  max-width: 100px;
-  max-height: 100px;
-  margin-right: 10px;
-  object-fit: cover;
-  border-radius: 3px;
-}
-
-.book-text-info {
-  flex-grow: 1;
-}
-```
-
+[Install Metadata Search Plugin](https://obsidian.md/plugins?id=obsidian-metadata-search-plugin)
 
 ## How to use
 
-### 1. Click the ribbon icon, or excute the command "Create new book note".
+### 1. Click the ribbon icon or run a command
 
-<img width="600" src="https://user-images.githubusercontent.com/3969643/161973483-ab007598-e0b8-433f-9697-75ee0ef74195.png">
+Each enabled metadata kind registers its own ribbon icon and commands:
 
-### 2. Search for books by keywords.
+- **Create new books note** / **Create new games note** — Opens a search modal, lets you pick a result, and creates a new note.
+- **Insert books metadata** / **Insert games metadata** — Searches using the current note's name and inserts metadata at the top of the active note.
 
-<img width="600" src="https://user-images.githubusercontent.com/3969643/161973979-51f642c9-626a-4015-a7e9-dfdbe6ec2cbc.png">
+### 2. Search by keywords
 
-### 3. Select the book from the search results.
+Type a query (e.g. a book title or game name) into the search modal and press Enter.
 
-<img width="600" src="https://user-images.githubusercontent.com/3969643/161974310-13c3b39b-51dc-472f-b787-db64f74caf74.png">
+### 3. Select a result
 
-### 4. Voila! A note has been created.
+Pick an item from the search results. If **Show cover images in search** is enabled, cover thumbnails are displayed alongside each result.
 
-<img width="600" src="https://user-images.githubusercontent.com/3969643/161974593-1b7bfe69-cb9d-47d7-a43d-1d725295a122.png">
+### 4. A note is created
 
+A new note is created (or metadata is inserted) using your configured template and file name format.
 
-## How to use settings
+## Settings
 
-<img width="700"  src="https://user-images.githubusercontent.com/3969643/184919550-68eff0e4-2b02-41bb-8f17-30a5354359a3.png">
+Settings are organised per metadata kind. Each kind has its own section with the following options:
 
-### New file location
+### General
 
-Set the folder location where the new file is created. Otherwise, a new file is created in the Obsidian Root folder.
+| Setting                     | Description                                      |
+| --------------------------- | ------------------------------------------------ |
+| Open new note on completion | Automatically open the note after creation.      |
 
-### New file name
+### Per-kind settings
 
-You can set the file name format. The default format is `{{title}} - {{author}}`.
-You can use `{{DATE}}` or `{{DATE:YYYYMMDD}}` to set a unique file name.
+| Setting                      | Description                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Enabled                      | Enable/disable this metadata kind entirely.                                                          |
+| Service provider             | Choose which provider to use for searching.                                                          |
+| New file location            | Folder where new notes are created.                                                                  |
+| New file name                | File name format using `{{variables}}`. A live preview is shown in settings.                         |
+| Template file                | Path to a template note used when creating notes. If empty, default YAML frontmatter is generated.   |
+| Show cover images in search  | Display cover thumbnails in the search results modal.                                                |
+| Save cover images            | Download cover images into your vault. When enabled, a **Cover image path** folder can be specified. |
 
-### Template file
+Provider-specific credentials (API keys, tokens, etc.) are configured within the provider section under each kind.
 
-You can set the template file location. There is an example template at the bottom.
+## Template variables
 
-### Service Provider
+### Books
 
-You can set up the services that you use to search for books. Only Google and Naver(네이버) are available now.
-To use Naver Book Search, clientId and clientSecret are required. I will explain how to get clientId and clientSecret from Naver on my blog.
+| Variable          | Description                                              |
+| ----------------- | -------------------------------------------------------- |
+| `title`           | The title of the book.                                   |
+| `subtitle`        | The subtitle of the book (may be empty).                 |
+| `author`          | Comma-separated list of authors.                         |
+| `authors`         | Array of author names.                                   |
+| `category`        | Comma-separated list of categories.                      |
+| `categories`      | Array of category names.                                 |
+| `description`     | Book description.                                        |
+| `publisher`       | Publisher name.                                          |
+| `publishDate`     | Publication date.                                        |
+| `totalPage`       | Total number of pages.                                   |
+| `coverUrl`        | Cover image URL (largest available).                     |
+| `coverSmallUrl`   | Small cover image URL.                                   |
+| `coverMediumUrl`  | Medium cover image URL.                                  |
+| `coverLargeUrl`   | Large cover image URL.                                   |
+| `localCoverImage` | Local vault path of the saved cover image.               |
+| `isbn10`          | ISBN-10.                                                 |
+| `isbn13`          | ISBN-13.                                                 |
+| `isbn`            | ISBN (Naver provider).                                   |
+| `link`            | Canonical link to the book.                              |
+| `previewLink`     | Preview link (Google Books).                             |
 
-### Cover Image Edge Curl
+### Games
 
-By default, the Google Books API adds a "page curl" effect to image thumbnails. Disabling this toggle will remove this effect from the cover images.
+| Variable          | Description                                              |
+| ----------------- | -------------------------------------------------------- |
+| `title`           | The title of the game.                                   |
+| `releaseDate`     | Release date (YYYY-MM-DD).                               |
+| `coverUrl`        | Cover image URL.                                         |
+| `localCoverImage` | Local vault path of the saved cover image.               |
+| `rating`          | User rating.                                             |
+| `metacritic`      | Metacritic / aggregated critic score.                    |
+| `playtime`        | Average playtime in hours (RAWG only).                   |
+| `genre`           | Comma-separated list of genres.                          |
+| `genres`          | Array of genre names.                                    |
+| `platform`        | Comma-separated list of platforms.                       |
+| `platforms`       | Array of platform names.                                 |
+| `developer`       | Comma-separated list of developers (IGDB only).          |
+| `developers`      | Array of developer names (IGDB only).                    |
+| `publisher`       | Comma-separated list of publishers (IGDB only).          |
+| `publishers`      | Array of publisher names (IGDB only).                    |
+| `description`     | Game description/summary (IGDB only).                    |
+| `link`            | Link to the game page.                                   |
+| `esrbRating`      | ESRB age rating.                                         |
+| `tag`             | Comma-separated list of tags/themes.                     |
+| `tags`            | Array of tag/theme names.                                |
+| `slug`            | URL slug for the game.                                   |
 
-### Cover Image Saving
+## Example templates
 
-This feature allows for the automatic downloading and saving of book cover images directly into your Obsidian vault.
-By default, this option is turned off and can be activated in the plugin settings.
-Upon enabling, you can designate a specific folder within your vault for storing these images, streamlining the management of book cover resources within your notes.
-To include these images in your notes, use the `{{localCoverImage}}` Templater variable.
+- [Book template](examples/book-template.md)
+- [Game template](examples/game-template.md)
 
-## Example template
+### Using Templater with cover images
 
-Please also find a definition of the variables used in this template below (see: [Template variables definitions](#template-variables-definitions)).
+If you use the [Templater](https://github.com/SilentVoid13/Templater) plugin, you can conditionally render cover images:
 
 ```
----
-tag: 📚Book
-title: "{{title}}"
-subtitle: "{{subtitle}}"
-author: [{{author}}]
-category: [{{category}}]
-publisher: {{publisher}}
-publish: {{publishDate}}
-total: {{totalPage}}
-isbn: {{isbn10}} {{isbn13}}
-cover: {{coverUrl}}
-localCover: {{localCoverImage}}
-status: unread
-created: {{DATE:YYYY-MM-DD HH:mm:ss}}
-updated: {{DATE:YYYY-MM-DD HH:mm:ss}}
----
-
-%% To use an image URL from the server, use the following syntax: %%
 <%* if (tp.frontmatter.cover && tp.frontmatter.cover.trim() !== "") { tR += `![cover|150](${tp.frontmatter.cover})` } %>
-
-%% To save images locally, enable the 'Enable Cover Image Save' option in the settings and enter as follows: %%
-<%* if (tp.frontmatter.localCover && tp.frontmatter.localCover.trim() !== "") { tR += `![[${tp.frontmatter.localCover}|150]]` } %>
-
-# {{title}}
-
 ```
 
+For locally saved images:
 
-## Dataview rendering
+```
+<%* if (tp.frontmatter.localCover && tp.frontmatter.localCover.trim() !== "") { tR += `![[${tp.frontmatter.localCover}|150]]` } %>
+```
 
-<img width="1024" alt="" src="https://user-images.githubusercontent.com/3969643/184546096-82ccaae6-9893-411b-aed6-a72c54f72cb2.png">
+## Advanced
 
-Here is the dataview query used in the demo
+### Inline scripts
+
+The search result object is available as `item` inside inline script blocks (`<%= ... %>`). You can use this to manipulate values beyond what simple `{{variable}}` replacement offers.
+
+#### Print the full result object
+
+````
+```json
+<%=JSON.stringify(item, null, 2)%>
+```
+````
+
+#### Link authors individually
+
+```
+authors: <%=item.authors.map(author => `[[${author}]]`).join(', ')%>
+```
+
+#### List authors as YAML array
+
+```
+authors: <%=item.authors.map(author=>`\n  - ${author}`).join('')%>
+```
+
+#### List/link categories
+
+```
+categories: <%=item.categories.map(category => `[[${category}]]`).join(', ')%>
+```
+
+#### Extract just the publication year
+
+```
+published_at: <%= item.publishDate.substring(0, 4) %>
+```
+
+#### Reformat a date (remove dashes)
+
+```
+published_at: <%= item.publishDate.replace(/-/g,'') %>
+```
+
+### Dataview integration
+
+Example Dataview queries for a bookshelf:
 
 ````
 # 📚 My Bookshelf
@@ -196,112 +230,61 @@ SORT status DESC, file.ctime ASC
 ```
 ````
 
-The banner at the top of the document is rendered using [Obsidian-banners](https://github.com/noatpad/obsidian-banners) plugin.
+## Provider setup
 
+### Google Books
 
-## Template variables definitions
+Works without an API key, but you may hit rate limits. To add a key:
 
-Please find here a definition of the possible variables to be used in your template. Simply write `{{name}}` in your template, and replace name by the desired book data, including:
+1. Create a project on [Google Cloud Console](https://console.cloud.google.com/projectcreate).
+2. Enable the [Books API](https://console.cloud.google.com/apis/library/books.googleapis.com).
+3. Create an API key in [Credentials](https://console.cloud.google.com/apis/credentials).
+4. (Optional) Restrict the key to the Books API only.
+5. Paste the key into the plugin settings under the Google Books provider.
 
-| Field           | Description                                                                                                                                        |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| title           | The title of the book.                                                                                                                             |
-| subtitle        | The subtitle of the book; may be absent.                                                                                                           |
-| author          | A comma-separated string containing the names of the book's authors, indicating that multiple authors can be represented within a single string.   |
-| authors         | An array of strings, each element representing the name of one of the book's authors, indicating that multiple authors can be listed individually. |
-| category        | A comma-separated string indicating the book's category or categories, allowing representation of multiple categories within a single string.      |
-| categories      | An array of strings, each representing a different category that the book belongs to, indicating that a book can fall into multiple categories.    |
-| description     | Book description.                                                                                                                                  |
-| publisher       | The publisher of the book.                                                                                                                         |
-| totalPage       | The total number of pages in the book.                                                                                                             |
-| coverUrl        | Book cover image URL.                                                                                                                              |
-| coverSmallUrl   | A smaller book cover image URL.                                                                                                                    |
-| localCoverImage | Local path for the downloaded cover image. Requires activation of "Enabling Cover Images."                                                         |
-| publishDate     | The year the book was published.                                                                                                                   |
-| isbn10          | ISBN10                                                                                                                                             |
-| isbn13          | ISBN13                                                                                                                                             |
+Google Books also supports a **preferred locale** setting and an optional **locale picker** in the search modal.
 
+### Naver Books
 
-## Advanced
+Requires a Client ID and Client Secret from the [Naver Developer Center](https://developers.naver.com/).
 
-### Inline Script
+### Hardcover
 
-- The object "book" gives access to all attributes managed by the plugin.
-- Using `<%= book %>` one can manipulate the different attributes, or use all attributes together.
+Requires an API token from [Hardcover.app](https://hardcover.app/). A **Test Connection** button is available in settings to verify your token.
 
-#### To print out a book object:
+### RAWG
 
-````
-```json
-<%=book%>
+Requires a free API key from [rawg.io/apidocs](https://rawg.io/apidocs).
+
+### IGDB
+
+Requires Twitch application credentials (Client ID and Client Secret). Create them at [dev.twitch.tv/console](https://dev.twitch.tv/console). A **Test Connection** button is available in settings to verify your credentials.
+
+## CSS customisation
+
+The plugin includes built-in styles for search result items. If you want to customise the appearance of cover images in search results, you can add a CSS snippet in Obsidian:
+
+1. Go to **Settings → Appearance → CSS Snippets → Open snippets folder**.
+2. Create a new `.css` file and add your overrides.
+
+The relevant CSS classes are:
+
+```css
+.metadata-search-suggestion-item { /* Result item container */ }
+.metadata-search-cover-image { /* Cover image thumbnail */ }
+.metadata-search-text-info { /* Text info container */ }
 ```
-````
-
-or
-
-````
-```json
-<%=JSON.stringify(book, null, 2)%>
-```
-````
-
-#### When you want to list or link authors:
-
-```
----
-authors: <%=book.authors.map(author=>`\n  - ${author}`).join('')%>
----
-
-authors: <%=book.authors.map(author => `[[${author}]]`).join(', ')%>
-```
-
-#### When you want to list or link categories:
-
-```
----
-categories: <%=book.categories.map(category=>`\n  - ${category}`).join('')%>
----
-
-categories: <%=book.categories.map(category => `[[${category}]]`).join(', ')%>
-```
-
-#### When you want to isolate publication year
-
-```
-published_at: <%= book.publishDate.substring(0, 4) %>
-```
-
-#### When you want to have the publucation date under the format YYYYMMDD and not YYYY-MM-DD
-
-```
-published_at: <%= book.publishDate.replace(/-/g,'') %>
-```
-
-### How to add an API Key to bypass rate limits
-If the plugin fails to fetch book metadata, it might be that you have hit the free API rate limits, and need to add an API key.
-
-Here's how to create and use one:
-- Create a project on [Google Cloud](https://console.cloud.google.com/projectcreate)
-- Enable the Books API for your project using the [Books API page](https://console.cloud.google.com/apis/library/books.googleapis.com)
-- Create an API key for your Google Cloud project using the [Google Cloud Credentials](https://console.cloud.google.com/apis/credentials) page
-- To limit the security risks of losing that key, you can edit it, and click on "Restrict key" under "API restrictions", then select only the "Books API" API
-- Add the API key to the settings of the Metadata Search plugin, under "Set API Key"
-- Once added, click on "Save", then "API Check"
-
-
 
 ## License
 
-[Obsidian Metadata Search Plugin](https://github.com/fmartingr/obsidian-metadata-search-plugin) is licensed under the GNU AGPLv3 license. Refer to [LICENSE](https://github.com/SilentVoid13/Templater/blob/master/LICENSE.TXT) for more information.
-
+[Obsidian Metadata Search Plugin](https://github.com/fmartingr/obsidian-metadata-search-plugin) is licensed under the MIT License. See [LICENSE.txt](./LICENSE.txt) for details.
 
 ## Contributing
 
-Feel free to contribute.
+Feel free to contribute!
 
-You can create an [issue](https://github.com/fmartingr/obsidian-metadata-search-plugin/issues) to report a bug, suggest an improvement for this plugin, ask a question, etc.
-
-You can make a [pull request](https://github.com/fmartingr/obsidian-metadata-search-plugin/pulls) to contribute to this plugin development.
+- [Open an issue](https://github.com/fmartingr/obsidian-metadata-search-plugin/issues) to report bugs, suggest improvements, or ask questions.
+- [Submit a pull request](https://github.com/fmartingr/obsidian-metadata-search-plugin/pulls) to contribute code.
 
 ### Development
 
@@ -324,14 +307,18 @@ bun run test
 bun run build
 ```
 
-The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-metadata-search-plugin/` for local testing.
+The `dist/` folder contains the built plugin files (`main.js`, `manifest.json`, `styles.css`). You can symlink it into your vault's `.obsidian/plugins/obsidian-metadata-search-plugin/` for local testing, or use the provided helper scripts:
 
+```bash
+# Install built plugin into a vault (set OBSIDIAN_VAULT env var)
+bun run vault:install
+
+# Uninstall from a vault
+bun run vault:uninstall
+```
 
 ## Support
 
 If this plugin helped you and you wish to contribute :)
 
-Buy me coffee on [buymeacoffee.com/fmartingr](https://www.buymeacoffee.com/fmartingr)
-
-<a href="https://www.buymeacoffee.com/fmartingr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>&nbsp;
-<a href="https://fmartingr.github.io/buymeacoffee/"><img src="https://user-images.githubusercontent.com/3969643/184924261-f0224843-08fa-4bce-af70-dc5db589979f.png" height="60"></a>
+<a href="https://www.buymeacoffee.com/fmartingr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>

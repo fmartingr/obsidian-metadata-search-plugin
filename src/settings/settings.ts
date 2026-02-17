@@ -349,7 +349,7 @@ export class MetadataSearchSettingTab extends PluginSettingTab {
     templateFileDesc.createDiv({ text: 'Template file to use when creating notes.' });
     templateFileDesc.createEl('a', {
       text: 'Example Template',
-      href: `${docUrl}#example-template`,
+      href: `${docUrl}/blob/master/examples/${kindId}-template.md`,
     });
     new Setting(containerEl)
       .setName('Template file')
