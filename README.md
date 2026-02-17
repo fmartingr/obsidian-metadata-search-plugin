@@ -317,8 +317,3 @@ bun run vault:install
 bun run vault:uninstall
 ```
 
-## Support
-
-If this plugin helped you and you wish to contribute :)
-
-<a href="https://www.buymeacoffee.com/fmartingr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>
