@@ -37,6 +37,7 @@ export const gamesKind: MetadataKind = {
     'coverUrl',
     'localCoverImage',
     'genres',
+    'platforms',
     'link',
     { key: 'status', defaultValue: 'Backlog' },
   ],

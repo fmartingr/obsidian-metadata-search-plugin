@@ -8,6 +8,7 @@ import { naverBooksRegistration } from '@providers/books/naver';
 import { hardcoverBooksRegistration } from '@providers/books/hardcover';
 import { gamesKind } from '@providers/games/kind';
 import { rawgGamesRegistration } from '@providers/games/rawg';
+import { igdbGamesRegistration } from '@providers/games/igdb';
 
 import { SearchModal } from '@views/search_modal';
 import { MetadataSuggestModal } from '@views/suggest_modal';
@@ -37,6 +38,7 @@ function registerAllProviders() {
   registry.registerProvider(naverBooksRegistration);
   registry.registerProvider(hardcoverBooksRegistration);
   registry.registerProvider(rawgGamesRegistration);
+  registry.registerProvider(igdbGamesRegistration);
 }
 
 export default class MetadataSearchPlugin extends Plugin {

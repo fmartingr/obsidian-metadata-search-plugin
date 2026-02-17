@@ -8,6 +8,7 @@ import { NaverBooksProvider } from './books/naver';
 import { HardcoverBooksProvider } from './books/hardcover';
 import { gamesKind } from './games/kind';
 import { rawgGamesRegistration, RawgGamesProvider } from './games/rawg';
+import { igdbGamesRegistration, IgdbGamesProvider } from './games/igdb';
 
 // Register everything for tests
 registry.registerKind(booksKind);
@@ -16,6 +17,7 @@ registry.registerProvider(googleBooksRegistration);
 registry.registerProvider(naverBooksRegistration);
 registry.registerProvider(hardcoverBooksRegistration);
 registry.registerProvider(rawgGamesRegistration);
+registry.registerProvider(igdbGamesRegistration);
 
 describe('ProviderRegistry', () => {
   describe('kinds', () => {
@@ -51,7 +53,7 @@ describe('ProviderRegistry', () => {
 
     it('returns providers for games kind', () => {
       const providers = registry.getProvidersForKind('games');
-      expect(providers.length).toEqual(1);
+      expect(providers.length).toEqual(2);
     });
 
     it('creates GoogleBooksProvider', () => {
@@ -81,6 +83,14 @@ describe('ProviderRegistry', () => {
       expect(provider).toBeInstanceOf(RawgGamesProvider);
     });
 
+    it('creates IgdbGamesProvider', () => {
+      const provider = registry.createProvider('igdb-games', {
+        clientId: 'test-id',
+        clientSecret: 'test-secret',
+      });
+      expect(provider).toBeInstanceOf(IgdbGamesProvider);
+    });
+
     it('throws for unknown provider', () => {
       expect(() => registry.createProvider('unknown', {})).toThrow("Provider 'unknown' not found.");
     });
@@ -96,6 +106,13 @@ describe('ProviderRegistry', () => {
       const reg = registry.getProviderRegistration('rawg-games');
       expect(reg).toBeDefined();
       expect(reg?.name).toEqual('RAWG');
+      expect(reg?.kind).toEqual('games');
+    });
+
+    it('gets igdb provider registration', () => {
+      const reg = registry.getProviderRegistration('igdb-games');
+      expect(reg).toBeDefined();
+      expect(reg?.name).toEqual('IGDB');
       expect(reg?.kind).toEqual('games');
     });
   });
