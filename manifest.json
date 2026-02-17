@@ -1,5 +1,5 @@
 {
-	"id": "obsidian-metadata-search-plugin",
+	"id": "metadata-search",
 	"name": "Metadata Search",
 	"minAppVersion": "0.15.0",
 	"description": "llows creating and updating notes with properties for books and games automatically.",
