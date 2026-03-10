@@ -271,7 +271,7 @@ export default class MetadataSearchPlugin extends Plugin {
     const imageName = makeFileName(result, fileNameFormat, 'jpg');
     const savedPath = await this.downloadAndSaveImage(imageName, kindSettings.coverImagePath, coverUrl);
     if (savedPath) {
-      result.localCoverImage = `[[${savedPath}]]`;
+      result.localCoverImage = savedPath;
     }
   }
 
